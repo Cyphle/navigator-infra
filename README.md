@@ -1,210 +1,242 @@
-# Infrastructure AWS - Projet navigator
+# Navigator Application - AWS ECS Deployment
 
-Ce dossier contient la configuration Terraform complète pour déployer l'infrastructure AWS équivalente à votre infrastructure Scaleway.
+This directory contains the Terraform infrastructure code for deploying the Navigator application on AWS ECS, optimized for free tier usage while following security best practices.
 
-## 🏗️ Architecture globale
+## Architecture Overview
 
 ```
-Internet
-    ↓
-Internet Gateway
-    ↓
-Subnet Public (eu-west-3a)
-    ↓
-NAT Gateway
-    ↓
-Subnets Privés (eu-west-3a, eu-west-3b)
-    ↓
-ECS Cluster + Bases de données + ECR
+Internet → ALB (HTTPS) → ECS Services (HTTP internal)
+                        ├── React Frontend (Fargate)
+                        ├── Quarkus Backend (Fargate) 
+                        └── Keycloak (Fargate)
+                        ↓
+                  RDS PostgreSQL (Multi-AZ)
 ```
 
-## 📁 Structure des modules
+## Directory Structure
 
-### 1. **01-vpc** - Infrastructure réseau
-- **VPC** : Réseau privé isolé (10.0.0.0/16)
-- **Subnets** : 1 public + 2 privés sur 2 AZ
-- **Internet Gateway** : Accès Internet pour le subnet public
-- **NAT Gateway** : Accès Internet sortant pour les subnets privés
-- **Route Tables** : Configuration du routage réseau
+```
+aws/
+├── terraform/
+│   ├── 01-vpc/                 # VPC, subnets, security groups, ALB, Route53
+│   ├── 02-databases/           # RDS PostgreSQL configuration
+│   ├── 03-ecr/                 # ECR repositories for container images
+│   ├── 04-services/            # ECS cluster and services
+│   │   ├── frontend/           # React frontend service
+│   │   ├── backend/            # Quarkus backend service
+│   │   └── keycloak/           # Keycloak service
+│   ├── scripts/                # Deployment scripts
+│   ├── main.tf                 # Main Terraform configuration
+│   ├── variables.tf            # Variable definitions
+│   ├── outputs.tf              # Output definitions
+│   └── terraform.tfvars.example # Example variables file
+└── README.md                   # This file
+```
 
-### 2. **02-ecs** - Cluster ECS Fargate
-- **Cluster ECS** : Orchestrateur de conteneurs serverless
-- **Service ECS** : Déploiement et gestion de l'application
-- **Application Load Balancer** : Distribution du trafic
-- **Task Definition** : Configuration des conteneurs
-- **IAM Roles** : Permissions pour ECS et l'application
+## Key Features
 
-### 3. **03-database** - Bases de données managées
-- **RDS PostgreSQL** : Base relationnelle (PostgreSQL 15.4)
-- **ElastiCache Redis** : Cache en mémoire (Redis 7.0)
-- **Subnet Groups** : Placement dans les subnets privés
-- **Security Groups** : Accès uniquement depuis ECS
+### Security Best Practices
+- VPC with private subnets for databases
+- Security groups with least privilege access
+- SSL/TLS termination at ALB
+- Internal HTTP communication within VPC
+- Secrets Manager for sensitive data
+- RDS encryption at rest
 
-### 4. **04-applications/01-ecr** - Registry Docker
-- **ECR Repository** : Registry privé pour images Docker
-- **Lifecycle Policy** : Gestion automatique des images
-- **Scan automatique** : Détection des vulnérabilités
+### Free Tier Optimization
+- Fargate Spot instances for cost savings
+- Single RDS db.t3.micro instance (free tier eligible)
+- Route 53 hosted zone (free for first hosted zone)
+- CloudWatch logs with 7-day retention
 
-## 🚀 Ordre de déploiement
+### High Availability
+- Multi-AZ deployment
+- Application Load Balancer with health checks
+- Auto Scaling for ECS services
+- RDS Multi-AZ for database
 
-**IMPORTANT** : Respectez cet ordre pour éviter les erreurs de dépendances.
+## Prerequisites
+
+1. **AWS CLI** configured with appropriate permissions
+2. **Terraform** >= 1.0
+3. **Docker** for building container images
+4. **Domain names** configured in Route 53
+
+## Quick Start
+
+1. **Configure AWS credentials:**
+   ```bash
+   aws configure
+   ```
+
+2. **Copy and customize variables:**
+   ```bash
+   cd terraform
+   cp terraform.tfvars.example terraform.tfvars
+   # Edit terraform.tfvars with your values
+   ```
+
+3. **Deploy infrastructure:**
+   ```bash
+   ./scripts/on.sh
+   ```
+
+## Manual Deployment Steps
+
+### 1. Infrastructure Deployment
 
 ```bash
-# 1. Déployer le VPC en premier
-cd AWS/01-vpc
+cd terraform
+
+# Initialize Terraform
 terraform init
-terraform apply -var-file="secrets.tfvars"
 
-# 2. Déployer le cluster ECS
-cd ../02-ecs
-terraform init
-terraform apply -var-file="secrets.tfvars"
+# Plan deployment
+terraform plan
 
-# 3. Déployer les bases de données
-cd ../03-database
-terraform init
-terraform apply -var-file="secrets.tfvars"
-
-# 4. Déployer ECR (optionnel, peut être fait en parallèle)
-cd ../04-applications/01-ecr
-terraform init
-terraform apply -var-file="secrets.tfvars"
-```
-
-## 📋 Configuration requise
-
-### Prérequis
-- **Terraform** : Version >= 1.12.2
-- **AWS CLI** : Configuré avec vos credentials
-- **GitHub Actions** : Pour le déploiement automatique de l'application
-
-### Variables communes
-Créez un fichier `secrets.tfvars` dans chaque dossier avec :
-```hcl
-aws_access_key = "VOTRE_ACCESS_KEY"
-aws_secret_key = "VOTRE_SECRET_KEY"
-aws_region     = "eu-west-3"  # Optionnel, défaut: eu-west-3
-```
-
-### Variables spécifiques
-- **03-database** : Ajoutez `db_user`, `db_password`, `redis_user`, `redis_password`
-- **02-ecs** : Variables optionnelles pour personnaliser l'application
-
-## 🔒 Sécurité
-
-### Architecture sécurisée
-- **Subnets privés** : Bases de données et tâches ECS isolées d'Internet
-- **NAT Gateway** : Accès Internet sortant uniquement
-- **Security Groups** : Accès restreint entre services
-- **IAM Roles** : Principe du moindre privilège
-
-### Bonnes pratiques
-- Utilisez des mots de passe forts pour les bases
-- Activez CloudTrail pour l'audit
-- Surveillez les accès avec CloudWatch
-- Faites des sauvegardes régulières
-
-## 💰 Coûts estimés mensuels
-
-| Service | Coût estimé |
-|---------|-------------|
-| **VPC** | ~$49 (NAT Gateway + EIP) |
-| **ECS Fargate** | ~$45 (Cluster + 2 tâches + ALB) |
-| **RDS** | ~$17 (PostgreSQL + stockage) |
-| **ElastiCache** | ~$15 (Redis) |
-| **ECR** | ~$3 (stockage) |
-| **Total** | **~$129/mois** |
-
-*Note : Coûts basés sur une utilisation de développement. Les coûts de production peuvent varier.*
-
-## 🔧 Post-déploiement
-
-### Configuration de l'application
-L'application est automatiquement déployée via GitHub Actions :
-- **Déclencheurs** : Push sur main/develop ou déclenchement manuel
-- **Processus** : Mise à jour de la Task Definition avec la nouvelle image
-- **Rollback** : Automatique en cas d'échec du déploiement
-
-### Accès à l'application
-```bash
-# Récupérer l'URL de l'ALB
-aws elbv2 describe-load-balancers \
-  --region eu-west-3 \
-  --query 'LoadBalancers[?contains(LoadBalancerName, `navigator-front`)].DNSName' \
-  --output text
-```
-
-### Connexion aux bases
-```bash
-# PostgreSQL
-psql -h navigator-postgres.xxxxx.eu-west-3.rds.amazonaws.com -U navigatoruser -d navigatordb
-
-# Redis
-redis-cli -h navigator-redis.xxxxx.cache.amazonaws.com -p 6379
-```
-
-### Utilisation d'ECR
-```bash
-# Authentification
-aws ecr get-login-password --region eu-west-3 | docker login --username AWS --password-stdin VOTRE_ACCOUNT_ID.dkr.ecr.eu-west-3.amazonaws.com
-
-# Push d'image
-docker tag mon-app:latest VOTRE_ACCOUNT_ID.dkr.ecr.eu-west-3.amazonaws.com/navigator:latest
-docker push VOTRE_ACCOUNT_ID.dkr.ecr.eu-west-3.amazonaws.com/navigator:latest
-```
-
-## 📊 Monitoring et maintenance
-
-### Services AWS utilisés
-- **CloudWatch** : Métriques et logs
-- **CloudTrail** : Audit des actions API
-- **RDS** : Monitoring des bases de données
-- **ECS** : Logs et métriques des conteneurs
-
-### Maintenance recommandée
-- **Mises à jour** : RDS et ECS se mettent à jour automatiquement
-- **Backups** : RDS fait des sauvegardes quotidiennes
-- **Nettoyage** : ECR nettoie automatiquement les anciennes images
-- **Monitoring** : Surveillez les coûts et performances
-
-## 🚨 Dépannage
-
-### Problèmes courants
-1. **Dépendances** : Assurez-vous de déployer dans l'ordre
-2. **Credentials** : Vérifiez vos clés AWS
-3. **Quotas** : Vérifiez les limites de votre compte AWS
-4. **Région** : Tous les modules utilisent `eu-west-3`
-
-### Commandes utiles
-```bash
-# Vérifier l'état des ressources
-terraform state list
-
-# Voir les outputs
-terraform output
-
-# Forcer la destruction d'une ressource
-terraform destroy -target=aws_instance.example
-
-# Voir les logs Terraform
-export TF_LOG=DEBUG
+# Apply deployment
 terraform apply
 ```
 
-## 📝 Notes importantes
+### 2. Build and Push Docker Images
 
-- **Haute disponibilité** : Infrastructure déployée sur 2 AZ
-- **Sauvegarde** : RDS fait des sauvegardes automatiques
-- **Scalabilité** : ECS peut s'adapter à la charge
-- **Sécurité** : Architecture en profondeur avec subnets privés
-- **Coûts** : Surveillez l'utilisation pour optimiser les coûts
-- **Déploiement** : Automatique via GitHub Actions
+```bash
+# Get ECR repository URLs
+FRONTEND_REPO=$(terraform output -raw frontend_ecr_repository_url)
+BACKEND_REPO=$(terraform output -raw backend_ecr_repository_url)
+KEYCLOAK_REPO=$(terraform output -raw keycloak_ecr_repository_url)
 
-## 🔗 Liens utiles
+# Login to ECR
+aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $FRONTEND_REPO
 
-- [Documentation AWS Terraform](https://registry.terraform.io/providers/hashicorp/aws/latest/docs)
-- [Guide ECS](https://docs.aws.amazon.com/ecs/)
-- [Documentation RDS](https://docs.aws.amazon.com/rds/)
-- [Guide ElastiCache](https://docs.aws.amazon.com/elasticache/)
-- [Documentation ECR](https://docs.aws.amazon.com/ecr/)
-- [GitHub Actions AWS](https://github.com/aws-actions)
+# Build and push images
+docker build -t frontend:latest ../../frontend/
+docker tag frontend:latest $FRONTEND_REPO:latest
+docker push $FRONTEND_REPO:latest
+
+# Repeat for backend and keycloak...
+```
+
+### 3. Update ECS Services
+
+```bash
+CLUSTER_NAME=$(terraform output -raw ecs_cluster_arn | cut -d'/' -f2)
+
+aws ecs update-service --cluster $CLUSTER_NAME --service navigator-prod-frontend-service --force-new-deployment
+aws ecs update-service --cluster $CLUSTER_NAME --service navigator-prod-backend-service --force-new-deployment
+aws ecs update-service --cluster $CLUSTER_NAME --service navigator-prod-keycloak-service --force-new-deployment
+```
+
+## Configuration
+
+### Domain Configuration
+
+The application supports multiple domains:
+- Frontend: `app.one-navigator.fr`, `app.one-navigator.com`
+- Keycloak: `auth.one-navigator.fr`, `auth.one-navigator.com`
+
+### Environment Variables
+
+#### React Frontend
+- `REACT_APP_API_URL`: Backend API URL
+- `REACT_APP_AUTH_URL`: Keycloak URL
+- `REACT_APP_AUTH_REALM`: Keycloak realm name
+- `REACT_APP_AUTH_CLIENT_ID`: Keycloak client ID
+
+#### Quarkus Backend
+- Database connection via Secrets Manager
+- Keycloak configuration via Secrets Manager
+- Health check endpoint: `/q/health`
+
+#### Keycloak
+- Database connection via Secrets Manager
+- Admin credentials via Secrets Manager
+- Health check endpoint: `/health/ready`
+
+## Monitoring and Logging
+
+- **CloudWatch Logs**: All services log to CloudWatch
+- **Health Checks**: ALB health checks for all services
+- **Auto Scaling**: CPU-based auto scaling for all services
+- **RDS Monitoring**: Enhanced monitoring enabled
+
+## Security Considerations
+
+1. **Network Security**:
+    - Private subnets for ECS tasks
+    - Database in isolated subnets
+    - Security groups with minimal access
+
+2. **Data Security**:
+    - RDS encryption at rest
+    - Secrets Manager for credentials
+    - SSL/TLS for external communication
+
+3. **Access Control**:
+    - IAM roles with least privilege
+    - ECR image scanning enabled
+    - VPC endpoints for AWS services
+
+## Cost Optimization
+
+### Free Tier Usage
+- RDS db.t3.micro (750 hours/month free)
+- Route 53 hosted zone (first zone free)
+- CloudWatch logs (5GB free)
+- ECR (500MB free)
+
+### Cost-Saving Measures
+- Fargate Spot instances
+- 7-day log retention
+- Single RDS instance
+- Minimal resource allocation
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Certificate Validation**:
+    - Ensure DNS records are properly configured
+    - Wait for certificate validation to complete
+
+2. **Service Health Checks**:
+    - Check CloudWatch logs for service issues
+    - Verify security group rules
+    - Ensure proper environment variables
+
+3. **Database Connection**:
+    - Verify Secrets Manager configuration
+    - Check security group rules
+    - Ensure database is accessible from ECS tasks
+
+### Useful Commands
+
+```bash
+# Check ECS service status
+aws ecs describe-services --cluster navigator-prod-cluster --services navigator-prod-frontend-service
+
+# View CloudWatch logs
+aws logs tail /ecs/navigator-prod-frontend --follow
+
+# Check ALB target health
+aws elbv2 describe-target-health --target-group-arn <target-group-arn>
+```
+
+## Cleanup
+
+To destroy the infrastructure:
+
+```bash
+cd terraform
+terraform destroy
+```
+
+**Warning**: This will permanently delete all resources and data.
+
+## Support
+
+For issues and questions:
+1. Check CloudWatch logs
+2. Review Terraform state
+3. Verify AWS service limits
+4. Check security group configurations

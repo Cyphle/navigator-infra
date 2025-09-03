@@ -263,10 +263,10 @@ Le service ECS est configuré avec :
 ### **Déploiement manuel :**
 ```bash
 # Rendre le script exécutable
-chmod +x deploy.sh
+chmod +x on.sh
 
 # Déployer avec une nouvelle image
-NEW_IMAGE="rg.fr-par.scw.cloud/navigator/navigator-front:v1.2.0" ./deploy.sh
+NEW_IMAGE="rg.fr-par.scw.cloud/navigator/navigator-front:v1.2.0" ./on.sh
 ```
 
 ### **Variables d'environnement :**
