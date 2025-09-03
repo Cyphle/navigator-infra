@@ -1,0 +1,38 @@
+version: '3.8'
+services:
+  postgres:
+    image: postgres:16.9-bookworm
+    container_name: postgres_container
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: quarkusexample
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - quarkusexample
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.3
+    command:
+      - start-dev # for testing purposes
+      - --import-realm
+    environment:
+      - KEYCLOAK_ADMIN=admin
+      - KEYCLOAK_ADMIN_PASSWORD=admin
+    volumes:
+      - ./keycloak/realms/quarkusexample.json:/opt/keycloak/data/import/quarkusexample.json
+    ports:
+      - "8181:8080"
+    networks:
+      - quarkusexample
+
+volumes:
+  postgres_data:
+    driver: local
+
+networks:
+  quarkusexample:
+    driver: bridge
