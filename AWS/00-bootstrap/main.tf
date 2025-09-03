@@ -1,26 +1,8 @@
-# Bootstrap Resources for Terraform State Management
-# Run this first before configuring the S3 backend in main.tf
-
-terraform {
-  required_version = ">= 1.0"
-  required_providers {
-    aws = {
-      source  = "hashicorp/aws"
-      version = "~> 5.0"
-    }
-  }
-}
-
-provider "aws" {
-  region = var.aws_region
-}
-
-# S3 Bucket for Terraform State
 resource "aws_s3_bucket" "terraform_state" {
   bucket = var.state_bucket_name
 
   tags = {
-    Name        = "Terraform State Store"
+    Name        = "Navigator state"
     Environment = var.environment
     Purpose     = "terraform-state"
     ManagedBy   = "terraform"
@@ -31,7 +13,6 @@ resource "aws_s3_bucket" "terraform_state" {
   }
 }
 
-# S3 Bucket Versioning
 resource "aws_s3_bucket_versioning" "terraform_state" {
   bucket = aws_s3_bucket.terraform_state.id
   
@@ -40,7 +21,6 @@ resource "aws_s3_bucket_versioning" "terraform_state" {
   }
 }
 
-# S3 Bucket Encryption
 resource "aws_s3_bucket_server_side_encryption_configuration" "terraform_state" {
   bucket = aws_s3_bucket.terraform_state.id
 
@@ -52,7 +32,6 @@ resource "aws_s3_bucket_server_side_encryption_configuration" "terraform_state" 
   }
 }
 
-# S3 Bucket Public Access Block
 resource "aws_s3_bucket_public_access_block" "terraform_state" {
   bucket = aws_s3_bucket.terraform_state.id
 
@@ -62,7 +41,6 @@ resource "aws_s3_bucket_public_access_block" "terraform_state" {
   restrict_public_buckets = true
 }
 
-# S3 Bucket Policy for Terraform State
 resource "aws_s3_bucket_policy" "terraform_state" {
   bucket = aws_s3_bucket.terraform_state.id
   

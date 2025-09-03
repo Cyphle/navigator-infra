@@ -2,7 +2,7 @@
 # Modular infrastructure deployment
 
 terraform {
-  required_version = ">= 1.0"
+  required_version = ">= 1.12.2"
   required_providers {
     aws = {
       source  = "hashicorp/aws"

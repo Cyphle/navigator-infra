@@ -2,7 +2,7 @@
 
 # VPC Module
 module "vpc" {
-  source = "01-vpc"
+  source = "../01-vpc"
 
   name_prefix        = local.name_prefix
   common_tags        = local.common_tags
@@ -12,7 +12,7 @@ module "vpc" {
 
 # ECR Module
 module "ecr" {
-  source = "03-ecr"
+  source = "../03-ecr"
 
   name_prefix = local.name_prefix
   common_tags = local.common_tags
@@ -20,7 +20,7 @@ module "ecr" {
 
 # Databases Module
 module "databases" {
-  source = "02-databases"
+  source = "../02-databases"
 
   name_prefix                  = local.name_prefix
   common_tags                  = local.common_tags
@@ -31,7 +31,7 @@ module "databases" {
 
 # Services Module
 module "services" {
-  source = "04-services"
+  source = "../04-services"
 
   name_prefix                        = local.name_prefix
   common_tags                        = local.common_tags
