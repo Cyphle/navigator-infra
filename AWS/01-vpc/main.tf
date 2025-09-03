@@ -63,30 +63,7 @@ resource "aws_subnet" "database" {
   })
 }
 
-# NAT Gateway (for private subnet internet access)
-resource "aws_eip" "nat" {
-  count = 2
-
-  domain = "vpc"
-  depends_on = [aws_internet_gateway.main]
-
-  tags = merge(var.common_tags, {
-    Name = "${var.name_prefix}-nat-eip-${count.index + 1}"
-  })
-}
-
-resource "aws_nat_gateway" "main" {
-  count = 2
-
-  allocation_id = aws_eip.nat[count.index].id
-  subnet_id     = aws_subnet.public[count.index].id
-
-  tags = merge(var.common_tags, {
-    Name = "${var.name_prefix}-nat-gateway-${count.index + 1}"
-  })
-
-  depends_on = [aws_internet_gateway.main]
-}
+# VPC Endpoints replace NAT Gateway for AWS services access
 
 # Route Tables
 resource "aws_route_table" "public" {
@@ -107,10 +84,7 @@ resource "aws_route_table" "private" {
 
   vpc_id = aws_vpc.main.id
 
-  route {
-    cidr_block     = "0.0.0.0/0"
-    nat_gateway_id = aws_nat_gateway.main[count.index].id
-  }
+  # No internet route - access AWS services via VPC endpoints
 
   tags = merge(var.common_tags, {
     Name = "${var.name_prefix}-private-rt-${count.index + 1}"
