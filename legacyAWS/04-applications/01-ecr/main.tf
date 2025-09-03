@@ -1,6 +1,6 @@
 # Repository ECR pour les images Docker
-resource "aws_ecr_repository" "banana" {
-  name                 = "banana"
+resource "aws_ecr_repository" "navigator" {
+  name                 = "navigator"
   image_tag_mutability = "MUTABLE"
 
   image_scanning_configuration {
@@ -12,15 +12,15 @@ resource "aws_ecr_repository" "banana" {
   }
 
   tags = {
-    Name        = "banana-ecr"
+    Name        = "navigator-ecr"
     Environment = "production"
-    Project     = "banana"
+    Project     = "navigator"
   }
 }
 
 # Lifecycle policy pour nettoyer les images anciennes
-resource "aws_ecr_lifecycle_policy" "banana" {
-  repository = aws_ecr_repository.banana.name
+resource "aws_ecr_lifecycle_policy" "navigator" {
+  repository = aws_ecr_repository.navigator.name
 
   policy = jsonencode({
     rules = [

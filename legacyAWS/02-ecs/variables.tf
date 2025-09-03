@@ -18,7 +18,7 @@ variable "aws_region" {
 
 variable "app_image" {
   type        = string
-  default     = "rg.fr-par.scw.cloud/banana/banana-front:latest"
+  default     = "rg.fr-par.scw.cloud/navigator/navigator-front:latest"
   description = "Docker image for the application"
 }
 

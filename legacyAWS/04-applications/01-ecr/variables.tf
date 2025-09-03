@@ -18,6 +18,6 @@ variable "aws_region" {
 
 variable "repository_name" {
   type        = string
-  default     = "banana"
+  default     = "navigator"
   description = "Name of the ECR repository"
 }

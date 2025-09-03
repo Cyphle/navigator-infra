@@ -1,4 +1,4 @@
-# Infrastructure AWS - Projet Banana
+# Infrastructure AWS - Projet navigator
 
 Ce dossier contient la configuration Terraform complète pour déployer l'infrastructure AWS équivalente à votre infrastructure Scaleway.
 
@@ -130,17 +130,17 @@ L'application est automatiquement déployée via GitHub Actions :
 # Récupérer l'URL de l'ALB
 aws elbv2 describe-load-balancers \
   --region eu-west-3 \
-  --query 'LoadBalancers[?contains(LoadBalancerName, `banana-front`)].DNSName' \
+  --query 'LoadBalancers[?contains(LoadBalancerName, `navigator-front`)].DNSName' \
   --output text
 ```
 
 ### Connexion aux bases
 ```bash
 # PostgreSQL
-psql -h banana-postgres.xxxxx.eu-west-3.rds.amazonaws.com -U bananauser -d bananadb
+psql -h navigator-postgres.xxxxx.eu-west-3.rds.amazonaws.com -U navigatoruser -d navigatordb
 
 # Redis
-redis-cli -h banana-redis.xxxxx.cache.amazonaws.com -p 6379
+redis-cli -h navigator-redis.xxxxx.cache.amazonaws.com -p 6379
 ```
 
 ### Utilisation d'ECR
@@ -149,8 +149,8 @@ redis-cli -h banana-redis.xxxxx.cache.amazonaws.com -p 6379
 aws ecr get-login-password --region eu-west-3 | docker login --username AWS --password-stdin VOTRE_ACCOUNT_ID.dkr.ecr.eu-west-3.amazonaws.com
 
 # Push d'image
-docker tag mon-app:latest VOTRE_ACCOUNT_ID.dkr.ecr.eu-west-3.amazonaws.com/banana:latest
-docker push VOTRE_ACCOUNT_ID.dkr.ecr.eu-west-3.amazonaws.com/banana:latest
+docker tag mon-app:latest VOTRE_ACCOUNT_ID.dkr.ecr.eu-west-3.amazonaws.com/navigator:latest
+docker push VOTRE_ACCOUNT_ID.dkr.ecr.eu-west-3.amazonaws.com/navigator:latest
 ```
 
 ## 📊 Monitoring et maintenance

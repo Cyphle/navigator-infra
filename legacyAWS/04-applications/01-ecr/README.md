@@ -5,8 +5,8 @@ Ce dossier contient la configuration Terraform pour créer un registry Docker pr
 ## 🏗️ Ressources créées
 
 ### Repository ECR
-- **Ressource** : `aws_ecr_repository.banana`
-- **Nom** : `banana`
+- **Ressource** : `aws_ecr_repository.navigator`
+- **Nom** : `navigator`
 - **Fonction** : Registry privé pour stocker les images Docker
 - **Configuration** :
   - **Mutabilité des tags** : `MUTABLE` (permet de réécrire les tags)
@@ -14,7 +14,7 @@ Ce dossier contient la configuration Terraform pour créer un registry Docker pr
   - **Chiffrement** : AES256 pour la sécurité des données
 
 ### Lifecycle Policy
-- **Ressource** : `aws_ecr_lifecycle_policy.banana`
+- **Ressource** : `aws_ecr_lifecycle_policy.navigator`
 - **Fonction** : Gestion automatique du cycle de vie des images
 - **Règles** :
   - **Règle 1** : Garde les 30 dernières images taguées avec préfixe "v"
@@ -178,16 +178,16 @@ aws ecr get-login-password --region eu-west-3 | docker login --username AWS --pa
 ### Push d'une image
 ```bash
 # Tagger l'image
-docker tag mon-app:latest VOTRE_ACCOUNT_ID.dkr.ecr.eu-west-3.amazonaws.com/banana:latest
+docker tag mon-app:latest VOTRE_ACCOUNT_ID.dkr.ecr.eu-west-3.amazonaws.com/navigator:latest
 
 # Pousser l'image
-docker push VOTRE_ACCOUNT_ID.dkr.ecr.eu-west-3.amazonaws.com/banana:latest
+docker push VOTRE_ACCOUNT_ID.dkr.ecr.eu-west-3.amazonaws.com/navigator:latest
 ```
 
 ### Pull d'une image
 ```bash
 # Récupérer l'image
-docker pull VOTRE_ACCOUNT_ID.dkr.ecr.eu-west-3.amazonaws.com/banana:latest
+docker pull VOTRE_ACCOUNT_ID.dkr.ecr.eu-west-3.amazonaws.com/navigator:latest
 ```
 
 ## 🔒 Sécurité
@@ -252,7 +252,7 @@ spec:
     spec:
       containers:
       - name: mon-app
-        image: VOTRE_ACCOUNT_ID.dkr.ecr.eu-west-3.amazonaws.com/banana:latest
+        image: VOTRE_ACCOUNT_ID.dkr.ecr.eu-west-3.amazonaws.com/navigator:latest
 ```
 
 ### Pull Secret (optionnel)

@@ -5,7 +5,7 @@ Ce dossier contient la configuration Terraform pour créer les bases de données
 ## 🏗️ Ressources créées
 
 ### RDS PostgreSQL
-- **Ressource** : `aws_db_instance.banana_postgres`
+- **Ressource** : `aws_db_instance.navigator_postgres`
 - **Moteur** : PostgreSQL 15.4
 - **Instance** : `db.t3.micro` (2 vCPU, 1 GB RAM)
 - **Fonction** : Base de données relationnelle principale
@@ -17,7 +17,7 @@ Ce dossier contient la configuration Terraform pour créer les bases de données
   - **Snapshot final** : Créé avant destruction
 
 ### ElastiCache Redis
-- **Ressource** : `aws_elasticache_cluster.banana_redis`
+- **Ressource** : `aws_elasticache_cluster.navigator_redis`
 - **Moteur** : Redis 7.0
 - **Instance** : `cache.t3.micro` (2 vCPU, 0.5 GB RAM)
 - **Fonction** : Cache en mémoire pour les sessions et données temporaires
@@ -28,12 +28,12 @@ Ce dossier contient la configuration Terraform pour créer les bases de données
 
 ### Subnet Groups
 #### RDS Subnet Group
-- **Ressource** : `aws_db_subnet_group.banana`
+- **Ressource** : `aws_db_subnet_group.navigator`
 - **Fonction** : Définit les subnets où RDS peut déployer les instances
 - **Subnets** : Utilise les 2 subnets privés pour la haute disponibilité
 
 #### ElastiCache Subnet Group
-- **Ressource** : `aws_elasticache_subnet_group.banana`
+- **Ressource** : `aws_elasticache_subnet_group.navigator`
 - **Fonction** : Définit les subnets où ElastiCache peut déployer les clusters
 - **Subnets** : Utilise les 2 subnets privés pour la haute disponibilité
 
@@ -53,7 +53,7 @@ Ce dossier contient la configuration Terraform pour créer les bases de données
   - **Sortant** : Tous les ports et protocoles
 
 ### Parameter Group Redis
-- **Ressource** : `aws_elasticache_parameter_group.banana`
+- **Ressource** : `aws_elasticache_parameter_group.navigator`
 - **Fonction** : Configuration personnalisée pour Redis
 - **Paramètres** :
   - `maxmemory-policy = allkeys-lru` : Gestion automatique de la mémoire
@@ -256,13 +256,13 @@ ElastiCache Redis (subnet privé)
 ### PostgreSQL
 ```bash
 # Depuis un pod dans EKS
-psql -h banana-postgres.xxxxx.eu-west-3.rds.amazonaws.com -U bananauser -d bananadb
+psql -h navigator-postgres.xxxxx.eu-west-3.rds.amazonaws.com -U navigatoruser -d navigatordb
 ```
 
 ### Redis
 ```bash
 # Depuis un pod dans EKS
-redis-cli -h banana-redis.xxxxx.cache.amazonaws.com -p 6379
+redis-cli -h navigator-redis.xxxxx.cache.amazonaws.com -p 6379
 ```
 
 ## 📝 Notes importantes

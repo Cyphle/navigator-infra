@@ -1,18 +1,18 @@
 # Subnet Group pour RDS
-resource "aws_db_subnet_group" "banana" {
-  name       = "banana-db-subnet-group"
+resource "aws_db_subnet_group" "navigator" {
+  name       = "navigator-db-subnet-group"
   subnet_ids = data.aws_subnet.private_subnets[*].id
 
   tags = {
-    Name        = "banana-db-subnet-group"
+    Name        = "navigator-db-subnet-group"
     Environment = "production"
-    Project     = "banana"
+    Project     = "navigator"
   }
 }
 
 # Security Group pour RDS
 resource "aws_security_group" "rds" {
-  name_prefix = "banana-rds-"
+  name_prefix = "navigator-rds-"
   vpc_id      = data.aws_vpc.main.id
 
   ingress {
@@ -30,15 +30,15 @@ resource "aws_security_group" "rds" {
   }
 
   tags = {
-    Name        = "banana-rds-sg"
+    Name        = "navigator-rds-sg"
     Environment = "production"
-    Project     = "banana"
+    Project     = "navigator"
   }
 }
 
 # Instance RDS PostgreSQL
-resource "aws_db_instance" "banana_postgres" {
-  identifier = "banana-postgres"
+resource "aws_db_instance" "navigator_postgres" {
+  identifier = "navigator-postgres"
 
   engine         = "postgres"
   engine_version = "15.4"
@@ -49,36 +49,36 @@ resource "aws_db_instance" "banana_postgres" {
   storage_type         = "gp2"
   storage_encrypted    = true
 
-  db_name  = "bananadb"
+  db_name  = "navigatordb"
   username = var.db_user
   password = var.db_password
 
   vpc_security_group_ids = [aws_security_group.rds.id]
-  db_subnet_group_name   = aws_db_subnet_group.banana.name
+  db_subnet_group_name   = aws_db_subnet_group.navigator.name
 
   backup_retention_period = 7
   backup_window          = "03:00-04:00"
   maintenance_window     = "sun:04:00-sun:05:00"
 
   skip_final_snapshot = false
-  final_snapshot_identifier = "banana-postgres-final-snapshot"
+  final_snapshot_identifier = "navigator-postgres-final-snapshot"
 
   tags = {
-    Name        = "banana-postgres"
+    Name        = "navigator-postgres"
     Environment = "production"
-    Project     = "banana"
+    Project     = "navigator"
   }
 }
 
 # Subnet Group pour ElastiCache
-resource "aws_elasticache_subnet_group" "banana" {
-  name       = "banana-redis-subnet-group"
+resource "aws_elasticache_subnet_group" "navigator" {
+  name       = "navigator-redis-subnet-group"
   subnet_ids = data.aws_subnet.private_subnets[*].id
 }
 
 # Security Group pour ElastiCache
 resource "aws_security_group" "redis" {
-  name_prefix = "banana-redis-"
+  name_prefix = "navigator-redis-"
   vpc_id      = data.aws_vpc.main.id
 
   ingress {
@@ -96,16 +96,16 @@ resource "aws_security_group" "redis" {
   }
 
   tags = {
-    Name        = "banana-redis-sg"
+    Name        = "navigator-redis-sg"
     Environment = "production"
-    Project     = "banana"
+    Project     = "navigator"
   }
 }
 
 # Parameter Group pour Redis
-resource "aws_elasticache_parameter_group" "banana" {
+resource "aws_elasticache_parameter_group" "navigator" {
   family = "redis7"
-  name   = "banana-redis-params"
+  name   = "navigator-redis-params"
 
   parameter {
     name  = "maxmemory-policy"
@@ -114,20 +114,20 @@ resource "aws_elasticache_parameter_group" "banana" {
 }
 
 # Cluster ElastiCache Redis
-resource "aws_elasticache_cluster" "banana_redis" {
-  cluster_id           = "banana-redis"
+resource "aws_elasticache_cluster" "navigator_redis" {
+  cluster_id           = "navigator-redis"
   engine               = "redis"
   node_type            = "cache.t3.micro"
   num_cache_nodes      = 1
-  parameter_group_name = aws_elasticache_parameter_group.banana.name
+  parameter_group_name = aws_elasticache_parameter_group.navigator.name
   port                 = 6379
 
-  subnet_group_name = aws_elasticache_subnet_group.banana.name
+  subnet_group_name = aws_elasticache_subnet_group.navigator.name
   security_group_ids = [aws_security_group.redis.id]
 
   tags = {
-    Name        = "banana-redis"
+    Name        = "navigator-redis"
     Environment = "production"
-    Project     = "banana"
+    Project     = "navigator"
   }
 }

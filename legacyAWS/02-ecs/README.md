@@ -5,25 +5,25 @@ Ce dossier contient la configuration Terraform pour créer un cluster ECS Fargat
 ## 🏗️ Ressources créées
 
 ### Cluster ECS
-- **Ressource** : `aws_ecs_cluster.banana`
-- **Nom** : `banana-cluster`
+- **Ressource** : `aws_ecs_cluster.navigator`
+- **Nom** : `navigator-cluster`
 - **Fonction** : Cluster ECS pour orchestrer les conteneurs
 - **Configuration** : Container Insights activé pour le monitoring
 
 ### Task Definition
-- **Ressource** : `aws_ecs_task_definition.banana_front`
-- **Famille** : `banana-front`
+- **Ressource** : `aws_ecs_task_definition.navigator_front`
+- **Famille** : `navigator-front`
 - **Fonction** : Définit comment exécuter l'application
 - **Configuration** :
   - **CPU** : 256 (0.25 vCPU)
   - **Mémoire** : 512 MB
-  - **Image** : `rg.fr-par.scw.cloud/banana/banana-front:latest`
+  - **Image** : `rg.fr-par.scw.cloud/navigator/navigator-front:latest`
   - **Port** : 80
   - **Logs** : CloudWatch avec rétention 7 jours
 
 ### Service ECS
-- **Ressource** : `aws_ecs_service.banana_front`
-- **Nom** : `banana-front-service`
+- **Ressource** : `aws_ecs_service.navigator_front`
+- **Nom** : `navigator-front-service`
 - **Fonction** : Gère le déploiement et la scalabilité
 - **Configuration** :
   - **Type** : Fargate (serverless)
@@ -32,8 +32,8 @@ Ce dossier contient la configuration Terraform pour créer un cluster ECS Fargat
   - **Load Balancer** : Intégré avec ALB
 
 ### Application Load Balancer (ALB)
-- **Ressource** : `aws_lb.banana_front`
-- **Nom** : `banana-front-alb`
+- **Ressource** : `aws_lb.navigator_front`
+- **Nom** : `navigator-front-alb`
 - **Fonction** : Distribue le trafic entre les instances
 - **Configuration** :
   - **Type** : Application Load Balancer
@@ -41,7 +41,7 @@ Ce dossier contient la configuration Terraform pour créer un cluster ECS Fargat
   - **Port** : 80 (HTTP)
 
 ### Target Group
-- **Ressource** : `aws_lb_target_group.banana_front`
+- **Ressource** : `aws_lb_target_group.navigator_front`
 - **Fonction** : Définit les cibles (instances ECS)
 - **Configuration** :
   - **Type** : IP (pour Fargate)
@@ -71,7 +71,7 @@ Ce dossier contient la configuration Terraform pour créer un cluster ECS Fargat
 - **Policies** : Aucune par défaut (à personnaliser selon les besoins)
 
 ### CloudWatch Logs
-- **Ressource** : `aws_cloudwatch_log_group.banana_front`
+- **Ressource** : `aws_cloudwatch_log_group.navigator_front`
 - **Fonction** : Stockage des logs de l'application
 - **Configuration** : Rétention 7 jours
 
@@ -266,14 +266,14 @@ Le service ECS est configuré avec :
 chmod +x deploy.sh
 
 # Déployer avec une nouvelle image
-NEW_IMAGE="rg.fr-par.scw.cloud/banana/banana-front:v1.2.0" ./deploy.sh
+NEW_IMAGE="rg.fr-par.scw.cloud/navigator/navigator-front:v1.2.0" ./deploy.sh
 ```
 
 ### **Variables d'environnement :**
 - `AWS_REGION` : Région AWS (défaut: eu-west-3)
-- `ECS_CLUSTER_NAME` : Nom du cluster (défaut: banana-cluster)
-- `ECS_SERVICE_NAME` : Nom du service (défaut: banana-front-service)
-- `ECS_TASK_DEFINITION_FAMILY` : Famille de la task definition (défaut: banana-front)
+- `ECS_CLUSTER_NAME` : Nom du cluster (défaut: navigator-cluster)
+- `ECS_SERVICE_NAME` : Nom du service (défaut: navigator-front-service)
+- `ECS_TASK_DEFINITION_FAMILY` : Famille de la task definition (défaut: navigator-front)
 - `NEW_IMAGE` : Nouvelle image Docker à déployer
 
 ## 🚀 Bonnes pratiques

@@ -5,9 +5,9 @@ resource "aws_vpc" "main" {
   enable_dns_support   = true
 
   tags = {
-    Name        = "banana-vpc"
+    Name        = "navigator-vpc"
     Environment = "production"
-    Project     = "banana"
+    Project     = "navigator"
   }
 }
 
@@ -16,9 +16,9 @@ resource "aws_internet_gateway" "main" {
   vpc_id = aws_vpc.main.id
 
   tags = {
-    Name        = "banana-igw"
+    Name        = "navigator-igw"
     Environment = "production"
-    Project     = "banana"
+    Project     = "navigator"
   }
 }
 
@@ -30,9 +30,9 @@ resource "aws_subnet" "public_a" {
   map_public_ip_on_launch = true
 
   tags = {
-    Name        = "banana-public-a"
+    Name        = "navigator-public-a"
     Environment = "production"
-    Project     = "banana"
+    Project     = "navigator"
     Type        = "public"
   }
 }
@@ -44,9 +44,9 @@ resource "aws_subnet" "private_a" {
   availability_zone = "eu-west-3a"
 
   tags = {
-    Name        = "banana-private-a"
+    Name        = "navigator-private-a"
     Environment = "production"
-    Project     = "banana"
+    Project     = "navigator"
     Type        = "private"
   }
 }
@@ -58,9 +58,9 @@ resource "aws_subnet" "private_b" {
   availability_zone = "eu-west-3b"
 
   tags = {
-    Name        = "banana-private-b"
+    Name        = "navigator-private-b"
     Environment = "production"
-    Project     = "banana"
+    Project     = "navigator"
     Type        = "private"
   }
 }
@@ -75,9 +75,9 @@ resource "aws_route_table" "public" {
   }
 
   tags = {
-    Name        = "banana-public-rt"
+    Name        = "navigator-public-rt"
     Environment = "production"
-    Project     = "banana"
+    Project     = "navigator"
   }
 }
 
@@ -92,9 +92,9 @@ resource "aws_eip" "nat" {
   domain = "vpc"
 
   tags = {
-    Name        = "banana-nat-eip"
+    Name        = "navigator-nat-eip"
     Environment = "production"
-    Project     = "banana"
+    Project     = "navigator"
   }
 }
 
@@ -103,9 +103,9 @@ resource "aws_nat_gateway" "main" {
   subnet_id     = aws_subnet.public_a.id
 
   tags = {
-    Name        = "banana-nat-gateway"
+    Name        = "navigator-nat-gateway"
     Environment = "production"
-    Project     = "banana"
+    Project     = "navigator"
   }
 
   depends_on = [aws_internet_gateway.main]
@@ -121,9 +121,9 @@ resource "aws_route_table" "private" {
   }
 
   tags = {
-    Name        = "banana-private-rt"
+    Name        = "navigator-private-rt"
     Environment = "production"
-    Project     = "banana"
+    Project     = "navigator"
   }
 }
 
