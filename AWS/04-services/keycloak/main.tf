@@ -1,4 +1,4 @@
-# Keycloak Service Configuration
+# Keycloak Service - Independent ECS Cluster
 
 # Random password for Keycloak admin
 resource "random_password" "keycloak_admin_password" {
@@ -27,7 +27,104 @@ resource "aws_secretsmanager_secret_version" "keycloak_credentials" {
   })
 }
 
+# ECS Cluster for Keycloak
+resource "aws_ecs_cluster" "keycloak" {
+  name = "${var.name_prefix}-keycloak-cluster"
 
+  setting {
+    name  = "containerInsights"
+    value = "enabled"
+  }
+
+  tags = var.common_tags
+}
+
+# ECS Cluster Capacity Providers
+resource "aws_ecs_cluster_capacity_providers" "keycloak" {
+  cluster_name = aws_ecs_cluster.keycloak.name
+
+  capacity_providers = ["FARGATE", "FARGATE_SPOT"]
+
+  default_capacity_provider_strategy {
+    base              = 1
+    weight            = 100
+    capacity_provider = "FARGATE_SPOT"
+  }
+}
+
+# ECS Task Execution Role
+resource "aws_iam_role" "keycloak_task_execution_role" {
+  name = "${var.name_prefix}-keycloak-task-execution-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "ecs-tasks.amazonaws.com"
+        }
+      }
+    ]
+  })
+
+  tags = var.common_tags
+}
+
+resource "aws_iam_role_policy_attachment" "keycloak_task_execution_role_policy" {
+  role       = aws_iam_role.keycloak_task_execution_role.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+}
+
+# Additional policy for Secrets Manager access
+resource "aws_iam_role_policy" "keycloak_task_execution_secrets" {
+  name = "${var.name_prefix}-keycloak-secrets-policy"
+  role = aws_iam_role.keycloak_task_execution_role.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "secretsmanager:GetSecretValue"
+        ]
+        Resource = [
+          var.db_credentials_secret_arn
+        ]
+      }
+    ]
+  })
+}
+
+# ECS Task Role (for application-level permissions)
+resource "aws_iam_role" "keycloak_task_role" {
+  name = "${var.name_prefix}-keycloak-task-role"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Action = "sts:AssumeRole"
+        Effect = "Allow"
+        Principal = {
+          Service = "ecs-tasks.amazonaws.com"
+        }
+      }
+    ]
+  })
+
+  tags = var.common_tags
+}
+
+# CloudWatch Log Group
+resource "aws_cloudwatch_log_group" "keycloak" {
+  name              = "/ecs/${var.name_prefix}-keycloak"
+  retention_in_days = 7
+
+  tags = var.common_tags
+}
 
 # ECS Task Definition for Keycloak
 resource "aws_ecs_task_definition" "keycloak" {
@@ -36,8 +133,8 @@ resource "aws_ecs_task_definition" "keycloak" {
   requires_compatibilities = ["FARGATE"]
   cpu                      = var.ecs_config.cpu
   memory                   = var.ecs_config.memory
-  execution_role_arn       = var.ecs_task_execution_role_arn
-  task_role_arn           = var.ecs_task_role_arn
+  execution_role_arn       = aws_iam_role.keycloak_task_execution_role.arn
+  task_role_arn           = aws_iam_role.keycloak_task_role.arn
 
   container_definitions = jsonencode([
     {
@@ -101,7 +198,7 @@ resource "aws_ecs_task_definition" "keycloak" {
       logConfiguration = {
         logDriver = "awslogs"
         options = {
-          awslogs-group         = var.keycloak_log_group_name
+          awslogs-group         = aws_cloudwatch_log_group.keycloak.name
           awslogs-region        = var.aws_region
           awslogs-stream-prefix = "ecs"
         }
@@ -126,7 +223,7 @@ resource "aws_ecs_task_definition" "keycloak" {
 # ECS Service for Keycloak
 resource "aws_ecs_service" "keycloak" {
   name            = "${var.name_prefix}-keycloak-service"
-  cluster         = var.ecs_cluster_id
+  cluster         = aws_ecs_cluster.keycloak.id
   task_definition = aws_ecs_task_definition.keycloak.arn
   desired_count   = var.ecs_config.desired_count
   launch_type     = "FARGATE"
@@ -152,7 +249,7 @@ resource "aws_ecs_service" "keycloak" {
 resource "aws_appautoscaling_target" "keycloak" {
   max_capacity       = 2
   min_capacity       = 1
-  resource_id        = "service/${var.ecs_cluster_name}/${aws_ecs_service.keycloak.name}"
+  resource_id        = "service/${aws_ecs_cluster.keycloak.name}/${aws_ecs_service.keycloak.name}"
   scalable_dimension = "ecs:service:DesiredCount"
   service_namespace  = "ecs"
 }
