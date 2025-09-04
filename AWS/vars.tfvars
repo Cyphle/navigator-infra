@@ -8,3 +8,5 @@ domain_names = {
   auth     = ["auth.one-navigator.fr", "auth.one-navigator.com"]
   back    = ["api.one-navigator.fr", "api.one-navigator.com"]
 }
+
+availability_zones = ["eu-west-3a", "eu-west-3b"]
