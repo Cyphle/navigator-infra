@@ -16,6 +16,15 @@ variable "environment" {
   default     = "prod"
 }
 
+variable "domain_names" {
+  description = "Domain names for the application"
+  type = object({
+    frontend = list(string)
+    auth     = list(string)
+    back     = list(string)
+  })
+}
+
 locals {
   name_prefix = "${var.project_name}-${var.environment}"
   common_tags = {

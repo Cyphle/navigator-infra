@@ -3,7 +3,7 @@
 
 # Security Group for VPC Endpoints
 resource "aws_security_group" "vpc_endpoints" {
-  name_prefix = "${var.name_prefix}-vpc-endpoints-"
+  name_prefix = "${local.name_prefix}-vpc-endpoints-"
   vpc_id      = aws_vpc.main.id
   description = "Security group for VPC endpoints"
 
@@ -23,8 +23,8 @@ resource "aws_security_group" "vpc_endpoints" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  tags = merge(var.common_tags, {
-    Name = "${var.name_prefix}-vpc-endpoints-sg"
+  tags = merge(local.common_tags, {
+    Name = "${local.name_prefix}-vpc-endpoints-sg"
   })
 
   lifecycle {
@@ -58,8 +58,8 @@ resource "aws_vpc_endpoint" "ecr_api" {
     ]
   })
 
-  tags = merge(var.common_tags, {
-    Name = "${var.name_prefix}-ecr-api-endpoint"
+  tags = merge(local.common_tags, {
+    Name = "${local.name_prefix}-ecr-api-endpoint"
   })
 }
 
@@ -89,8 +89,8 @@ resource "aws_vpc_endpoint" "ecr_dkr" {
     ]
   })
 
-  tags = merge(var.common_tags, {
-    Name = "${var.name_prefix}-ecr-dkr-endpoint"
+  tags = merge(local.common_tags, {
+    Name = "${local.name_prefix}-ecr-dkr-endpoint"
   })
 }
 
@@ -120,8 +120,8 @@ resource "aws_vpc_endpoint" "logs" {
     ]
   })
 
-  tags = merge(var.common_tags, {
-    Name = "${var.name_prefix}-logs-endpoint"
+  tags = merge(local.common_tags, {
+    Name = "${local.name_prefix}-logs-endpoint"
   })
 }
 
@@ -149,8 +149,8 @@ resource "aws_vpc_endpoint" "secretsmanager" {
     ]
   })
 
-  tags = merge(var.common_tags, {
-    Name = "${var.name_prefix}-secretsmanager-endpoint"
+  tags = merge(local.common_tags, {
+    Name = "${local.name_prefix}-secretsmanager-endpoint"
   })
 }
 
@@ -180,8 +180,8 @@ resource "aws_vpc_endpoint" "s3" {
     ]
   })
 
-  tags = merge(var.common_tags, {
-    Name = "${var.name_prefix}-s3-endpoint"
+  tags = merge(local.common_tags, {
+    Name = "${local.name_prefix}-s3-endpoint"
   })
 }
 
@@ -213,8 +213,8 @@ resource "aws_vpc_endpoint" "ecs" {
     ]
   })
 
-  tags = merge(var.common_tags, {
-    Name = "${var.name_prefix}-ecs-endpoint"
+  tags = merge(local.common_tags, {
+    Name = "${local.name_prefix}-ecs-endpoint"
   })
 }
 
@@ -227,8 +227,8 @@ resource "aws_vpc_endpoint" "ecs_agent" {
   security_group_ids  = [aws_security_group.vpc_endpoints.id]
   private_dns_enabled = true
 
-  tags = merge(var.common_tags, {
-    Name = "${var.name_prefix}-ecs-agent-endpoint"
+  tags = merge(local.common_tags, {
+    Name = "${local.name_prefix}-ecs-agent-endpoint"
   })
 }
 
@@ -241,7 +241,7 @@ resource "aws_vpc_endpoint" "ecs_telemetry" {
   security_group_ids  = [aws_security_group.vpc_endpoints.id]
   private_dns_enabled = true
 
-  tags = merge(var.common_tags, {
-    Name = "${var.name_prefix}-ecs-telemetry-endpoint"
+  tags = merge(local.common_tags, {
+    Name = "${local.name_prefix}-ecs-telemetry-endpoint"
   })
 }

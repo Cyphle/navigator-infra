@@ -2,23 +2,23 @@
 
 # ALB
 resource "aws_lb" "main" {
-  name               = "${var.name_prefix}-alb"
+  name               = "${local.name_prefix}-alb"
   internal           = false
   load_balancer_type = "application"
   security_groups    = [aws_security_group.alb.id]
-  subnets            = aws_subnet.public[*].id
+  subnets            = data.terraform_remote_state.vpc.outputs.public_subnet_ids
 
   enable_deletion_protection = false
 
-  tags = var.common_tags
+  tags = local.common_tags
 }
 
 # ALB Target Groups
 resource "aws_lb_target_group" "frontend" {
-  name        = "${var.name_prefix}-frontend-tg"
+  name        = "${local.name_prefix}-frontend-tg"
   port        = 80
   protocol    = "HTTP"
-  vpc_id      = aws_vpc.main.id
+  vpc_id      = data.terraform_remote_state.vpc.outputs.vpc_id
   target_type = "ip"
 
   health_check {
@@ -33,14 +33,14 @@ resource "aws_lb_target_group" "frontend" {
     unhealthy_threshold = 2
   }
 
-  tags = var.common_tags
+  tags = local.common_tags
 }
 
 resource "aws_lb_target_group" "backend" {
-  name        = "${var.name_prefix}-backend-tg"
+  name        = "${local.name_prefix}-backend-tg"
   port        = 8080
   protocol    = "HTTP"
-  vpc_id      = aws_vpc.main.id
+  vpc_id      = data.terraform_remote_state.vpc.outputs.vpc_id
   target_type = "ip"
 
   health_check {
@@ -55,14 +55,14 @@ resource "aws_lb_target_group" "backend" {
     unhealthy_threshold = 2
   }
 
-  tags = var.common_tags
+  tags = local.common_tags
 }
 
 resource "aws_lb_target_group" "keycloak" {
-  name        = "${var.name_prefix}-keycloak-tg"
+  name        = "${local.name_prefix}-keycloak-tg"
   port        = 8080
   protocol    = "HTTP"
-  vpc_id      = aws_vpc.main.id
+  vpc_id      = data.terraform_remote_state.vpc.outputs.vpc_id
   target_type = "ip"
 
   health_check {
@@ -77,7 +77,7 @@ resource "aws_lb_target_group" "keycloak" {
     unhealthy_threshold = 2
   }
 
-  tags = var.common_tags
+  tags = local.common_tags
 }
 
 # ALB Listeners
@@ -96,7 +96,7 @@ resource "aws_lb_listener" "http" {
     }
   }
 
-  tags = var.common_tags
+  tags = local.common_tags
 }
 
 resource "aws_lb_listener" "https" {
@@ -104,7 +104,7 @@ resource "aws_lb_listener" "https" {
   port              = "443"
   protocol          = "HTTPS"
   ssl_policy        = "ELBSecurityPolicy-TLS-1-2-2017-01"
-  certificate_arn   = var.certificate_arn
+  certificate_arn   = aws_acm_certificate_validation.main.certificate_arn
 
   default_action {
     type = "fixed-response"
@@ -115,7 +115,7 @@ resource "aws_lb_listener" "https" {
     }
   }
 
-  tags = var.common_tags
+  tags = local.common_tags
 }
 
 # ALB Listener Rules

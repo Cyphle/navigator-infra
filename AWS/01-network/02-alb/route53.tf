@@ -5,13 +5,13 @@
 # Hosted Zone (.fr)
 resource "aws_route53_zone" "fr" {
   name = "one-navigator.fr"
-  tags = merge(var.common_tags, { Name = "${var.name_prefix}-hosted-zone-fr" })
+  tags = merge(local.common_tags, { Name = "${local.name_prefix}-hosted-zone-fr" })
 }
 
 # Hosted Zone (.com)
 resource "aws_route53_zone" "com" {
   name = "one-navigator.com"
-  tags = merge(var.common_tags, { Name = "${var.name_prefix}-hosted-zone-com" })
+  tags = merge(local.common_tags, { Name = "${local.name_prefix}-hosted-zone-com" })
 }
 
 ############################
@@ -34,7 +34,7 @@ resource "aws_acm_certificate" "main" {
     create_before_destroy = true
   }
 
-  tags = var.common_tags
+  tags = local.common_tags
 }
 
 # Map pratique des options de validation par domaine
@@ -108,7 +108,7 @@ locals {
   }
 }
 
-# Crée un enregistrement A alias vers l’ALB pour chaque FQDN
+# Crée un enregistrement A alias vers l'ALB pour chaque FQDN
 resource "aws_route53_record" "aliases" {
   for_each = local.records_by_domain
 
@@ -117,8 +117,8 @@ resource "aws_route53_record" "aliases" {
   type    = "A"
 
   alias {
-    name                   = var.alb_dns_name   # ex: my-alb-123456.eu-west-1.elb.amazonaws.com
-    zone_id                = var.alb_zone_id    # zone id de l'ALB
+    name                   = aws_lb.main.dns_name   # ex: my-alb-123456.eu-west-1.elb.amazonaws.com
+    zone_id                = aws_lb.main.zone_id    # zone id de l'ALB
     evaluate_target_health = true
   }
 }

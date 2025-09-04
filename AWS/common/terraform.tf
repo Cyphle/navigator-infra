@@ -2,7 +2,7 @@
 
 # VPC Module
 module "vpc" {
-  source = "../01-vpc"
+  source = "../01-network"
 
   name_prefix        = local.name_prefix
   common_tags        = local.common_tags

@@ -15,4 +15,3 @@ terraform {
     encrypt = true
   }
 }
-

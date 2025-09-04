@@ -6,8 +6,8 @@ resource "aws_vpc" "main" {
   enable_dns_hostnames = true
   enable_dns_support   = true
 
-  tags = merge(var.common_tags, {
-    Name = "${var.name_prefix}-vpc"
+  tags = merge(local.common_tags, {
+    Name = "${local.name_prefix}-vpc"
   })
 }
 
@@ -15,8 +15,8 @@ resource "aws_vpc" "main" {
 resource "aws_internet_gateway" "main" {
   vpc_id = aws_vpc.main.id
 
-  tags = merge(var.common_tags, {
-    Name = "${var.name_prefix}-igw"
+  tags = merge(local.common_tags, {
+    Name = "${local.name_prefix}-igw"
   })
 }
 
@@ -29,8 +29,8 @@ resource "aws_subnet" "public" {
   availability_zone       = var.availability_zones[count.index]
   map_public_ip_on_launch = true
 
-  tags = merge(var.common_tags, {
-    Name = "${var.name_prefix}-public-subnet-${count.index + 1}"
+  tags = merge(local.common_tags, {
+    Name = "${local.name_prefix}-public-subnet-${count.index + 1}"
     Type = "public"
   })
 }
@@ -43,8 +43,8 @@ resource "aws_subnet" "private" {
   cidr_block        = "10.0.${count.index + 10}.0/24"
   availability_zone = var.availability_zones[count.index]
 
-  tags = merge(var.common_tags, {
-    Name = "${var.name_prefix}-private-subnet-${count.index + 1}"
+  tags = merge(local.common_tags, {
+    Name = "${local.name_prefix}-private-subnet-${count.index + 1}"
     Type = "private"
   })
 }
@@ -57,13 +57,11 @@ resource "aws_subnet" "database" {
   cidr_block        = "10.0.${count.index + 20}.0/24"
   availability_zone = var.availability_zones[count.index]
 
-  tags = merge(var.common_tags, {
-    Name = "${var.name_prefix}-database-subnet-${count.index + 1}"
+  tags = merge(local.common_tags, {
+    Name = "${local.name_prefix}-database-subnet-${count.index + 1}"
     Type = "database"
   })
 }
-
-# VPC Endpoints replace NAT Gateway for AWS services access
 
 # Route Tables
 resource "aws_route_table" "public" {
@@ -74,8 +72,8 @@ resource "aws_route_table" "public" {
     gateway_id = aws_internet_gateway.main.id
   }
 
-  tags = merge(var.common_tags, {
-    Name = "${var.name_prefix}-public-rt"
+  tags = merge(local.common_tags, {
+    Name = "${local.name_prefix}-public-rt"
   })
 }
 
@@ -86,16 +84,16 @@ resource "aws_route_table" "private" {
 
   # No internet route - access AWS services via VPC endpoints
 
-  tags = merge(var.common_tags, {
-    Name = "${var.name_prefix}-private-rt-${count.index + 1}"
+  tags = merge(local.common_tags, {
+    Name = "${local.name_prefix}-private-rt-${count.index + 1}"
   })
 }
 
 resource "aws_route_table" "database" {
   vpc_id = aws_vpc.main.id
 
-  tags = merge(var.common_tags, {
-    Name = "${var.name_prefix}-database-rt"
+  tags = merge(local.common_tags, {
+    Name = "${local.name_prefix}-database-rt"
   })
 }
 
@@ -123,10 +121,10 @@ resource "aws_route_table_association" "database" {
 
 # Database Subnet Group
 resource "aws_db_subnet_group" "main" {
-  name       = "${var.name_prefix}-db-subnet-group"
+  name       = "${local.name_prefix}-db-subnet-group"
   subnet_ids = aws_subnet.database[*].id
 
-  tags = merge(var.common_tags, {
-    Name = "${var.name_prefix}-db-subnet-group"
+  tags = merge(local.common_tags, {
+    Name = "${local.name_prefix}-db-subnet-group"
   })
 }

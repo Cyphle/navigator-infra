@@ -1,9 +1,9 @@
-# Security Groups for VPC Module
+# Security Groups for ALB Module
 
 # ALB Security Group
 resource "aws_security_group" "alb" {
-  name_prefix = "${var.name_prefix}-alb-"
-  vpc_id      = aws_vpc.main.id
+  name_prefix = "${local.name_prefix}-alb-"
+  vpc_id      = data.terraform_remote_state.vpc.outputs.vpc_id
 
   ingress {
     description = "HTTP"
@@ -28,8 +28,8 @@ resource "aws_security_group" "alb" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  tags = merge(var.common_tags, {
-    Name = "${var.name_prefix}-alb-sg"
+  tags = merge(local.common_tags, {
+    Name = "${local.name_prefix}-alb-sg"
   })
 
   lifecycle {
@@ -39,8 +39,8 @@ resource "aws_security_group" "alb" {
 
 # ECS Security Group
 resource "aws_security_group" "ecs" {
-  name_prefix = "${var.name_prefix}-ecs-"
-  vpc_id      = aws_vpc.main.id
+  name_prefix = "${local.name_prefix}-ecs-"
+  vpc_id      = data.terraform_remote_state.vpc.outputs.vpc_id
 
   ingress {
     description     = "HTTP from ALB"
@@ -65,8 +65,8 @@ resource "aws_security_group" "ecs" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  tags = merge(var.common_tags, {
-    Name = "${var.name_prefix}-ecs-sg"
+  tags = merge(local.common_tags, {
+    Name = "${local.name_prefix}-ecs-sg"
   })
 
   lifecycle {
@@ -76,8 +76,8 @@ resource "aws_security_group" "ecs" {
 
 # Database Security Group
 resource "aws_security_group" "database" {
-  name_prefix = "${var.name_prefix}-db-"
-  vpc_id      = aws_vpc.main.id
+  name_prefix = "${local.name_prefix}-db-"
+  vpc_id      = data.terraform_remote_state.vpc.outputs.vpc_id
 
   ingress {
     description     = "PostgreSQL from ECS"
@@ -94,8 +94,8 @@ resource "aws_security_group" "database" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  tags = merge(var.common_tags, {
-    Name = "${var.name_prefix}-db-sg"
+  tags = merge(local.common_tags, {
+    Name = "${local.name_prefix}-db-sg"
   })
 
   lifecycle {
@@ -105,8 +105,8 @@ resource "aws_security_group" "database" {
 
 # EFS Security Group (for shared storage if needed)
 resource "aws_security_group" "efs" {
-  name_prefix = "${var.name_prefix}-efs-"
-  vpc_id      = aws_vpc.main.id
+  name_prefix = "${local.name_prefix}-efs-"
+  vpc_id      = data.terraform_remote_state.vpc.outputs.vpc_id
 
   ingress {
     description     = "NFS from ECS"
@@ -123,8 +123,8 @@ resource "aws_security_group" "efs" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
-  tags = merge(var.common_tags, {
-    Name = "${var.name_prefix}-efs-sg"
+  tags = merge(local.common_tags, {
+    Name = "${local.name_prefix}-efs-sg"
   })
 
   lifecycle {
