@@ -1,5 +1,3 @@
-# Variables for VPC Module
-
 variable "name_prefix" {
   description = "Name prefix for resources"
   type        = string
@@ -20,8 +18,10 @@ variable "domain_names" {
   type = object({
     frontend = list(string)
     auth     = list(string)
+    back    = list(string)
   })
 }
+
 
 variable "certificate_arn" {
   description = "ARN of the SSL certificate"
