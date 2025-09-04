@@ -3,6 +3,7 @@ example/
 
 *.tfbackend
 
+secrets.tfvars
 .terraform/
 
 04-applications/03-external-secrets-operator/eso/02-in-namespace/.env
