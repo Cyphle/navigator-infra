@@ -29,18 +29,3 @@ output "backend_repository_name" {
   description = "Name of the backend ECR repository"
   value       = aws_ecr_repository.backend.name
 }
-
-output "keycloak_repository_url" {
-  description = "URL of the keycloak ECR repository"
-  value       = aws_ecr_repository.keycloak.repository_url
-}
-
-output "keycloak_repository_arn" {
-  description = "ARN of the keycloak ECR repository"
-  value       = aws_ecr_repository.keycloak.arn
-}
-
-output "keycloak_repository_name" {
-  description = "Name of the keycloak ECR repository"
-  value       = aws_ecr_repository.keycloak.name
-}

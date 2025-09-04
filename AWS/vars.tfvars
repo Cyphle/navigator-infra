@@ -10,3 +10,13 @@ domain_names = {
 }
 
 availability_zones = ["eu-west-3a", "eu-west-3b"]
+
+# Database
+database_config = {
+  instance_class         = "db.t3.micro"
+  allocated_storage      = 20
+  max_allocated_storage  = 100
+  backup_retention_period = 7
+  backup_window          = "03:00-04:00"
+  maintenance_window     = "sun:04:00-sun:05:00"
+}
