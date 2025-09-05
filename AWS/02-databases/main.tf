@@ -1,5 +1,17 @@
-# Random password for database
+# Random password for database admin (postgres user)
 resource "random_password" "db_password" {
+  length  = 16
+  special = true
+}
+
+# Random password for Navigator user
+resource "random_password" "navigator_password" {
+  length  = 16
+  special = true
+}
+
+# Random password for Keycloak user
+resource "random_password" "keycloak_password" {
   length  = 16
   special = true
 }
@@ -16,12 +28,24 @@ resource "aws_secretsmanager_secret" "db_credentials" {
 resource "aws_secretsmanager_secret_version" "db_credentials" {
   secret_id = aws_secretsmanager_secret.db_credentials.id
   secret_string = jsonencode({
-    username = "postgres"
-    password = random_password.db_password.result
-    engine   = "postgres"
-    host     = aws_db_instance.main.endpoint
-    port     = 5432
-    dbname   = "navigator"
+    # Admin credentials (postgres user)
+    admin_username = "postgres"
+    admin_password = random_password.db_password.result
+    engine         = "postgres"
+    host           = aws_db_instance.main.endpoint
+    port           = 5432
+    
+    # Navigator database credentials
+    navigator_username = postgresql_role.navigator_user.name
+    navigator_password = random_password.navigator_password.result
+    navigator_dbname   = postgresql_database.navigator.name
+    navigator_jdbc_url = "jdbc:postgresql://${aws_db_instance.main.endpoint}:5432/${postgresql_database.navigator.name}"
+    
+    # Keycloak database credentials
+    keycloak_username = postgresql_role.keycloak_user.name
+    keycloak_password = random_password.keycloak_password.result
+    keycloak_dbname   = postgresql_database.keycloak.name
+    keycloak_jdbc_url = "jdbc:postgresql://${aws_db_instance.main.endpoint}:5432/${postgresql_database.keycloak.name}"
   })
 }
 
@@ -59,7 +83,6 @@ resource "aws_db_instance" "main" {
   storage_encrypted     = true
 
   # Database configuration
-  db_name  = "navigator"
   username = "postgres"
   password = random_password.db_password.result
   port     = 5432
@@ -115,4 +138,68 @@ resource "aws_iam_role" "rds_enhanced_monitoring" {
 resource "aws_iam_role_policy_attachment" "rds_enhanced_monitoring" {
   role       = aws_iam_role.rds_enhanced_monitoring.name
   policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonRDSEnhancedMonitoringRole"
+}
+
+# Create Navigator database
+resource "postgresql_database" "navigator" {
+  name              = "navigator"
+  owner             = "postgres"
+  template          = "template0"
+  encoding          = "UTF8"
+  lc_collate        = "en_US.UTF-8"
+  lc_ctype          = "en_US.UTF-8"
+  connection_limit  = -1
+  allow_connections = true
+
+  depends_on = [aws_db_instance.main]
+}
+
+# Create Keycloak database
+resource "postgresql_database" "keycloak" {
+  name              = "keycloak"
+  owner             = "postgres"
+  template          = "template0"
+  encoding          = "UTF8"
+  lc_collate        = "en_US.UTF-8"
+  lc_ctype          = "en_US.UTF-8"
+  connection_limit  = -1
+  allow_connections = true
+
+  depends_on = [aws_db_instance.main]
+}
+
+# Create Navigator user
+resource "postgresql_role" "navigator_user" {
+  name     = "navigator_user"
+  login    = true
+  password = random_password.navigator_password.result
+
+  depends_on = [postgresql_database.navigator]
+}
+
+# Create Keycloak user
+resource "postgresql_role" "keycloak_user" {
+  name     = "keycloak_user"
+  login    = true
+  password = random_password.keycloak_password.result
+
+  depends_on = [postgresql_database.keycloak]
+}
+
+# Grant permissions to Navigator user on Navigator database
+resource "postgresql_grant" "navigator_grant" {
+  database    = postgresql_database.navigator.name
+  role        = postgresql_role.navigator_user.name
+  privileges  = ["ALL"]
+
+  depends_on = [postgresql_role.navigator_user]
+}
+
+# Grant permissions to Keycloak user on Keycloak database
+resource "postgresql_grant" "keycloak_grant" {
+  database    = postgresql_database.keycloak.name
+  role        = postgresql_role.keycloak_user.name
+  privileges  = ["ALL"]
+
+  depends_on = [postgresql_role.keycloak_user]
 }

@@ -183,15 +183,15 @@ resource "aws_ecs_task_definition" "keycloak" {
       secrets = [
         {
           name      = "KC_DB_URL"
-          valueFrom = "${var.db_credentials_secret_arn}:jdbc_url::"
+          valueFrom = "${var.db_credentials_secret_arn}:keycloak_jdbc_url::"
         },
         {
           name      = "KC_DB_USERNAME"
-          valueFrom = "${var.db_credentials_secret_arn}:username::"
+          valueFrom = "${var.db_credentials_secret_arn}:keycloak_username::"
         },
         {
           name      = "KC_DB_PASSWORD"
-          valueFrom = "${var.db_credentials_secret_arn}:password::"
+          valueFrom = "${var.db_credentials_secret_arn}:keycloak_password::"
         }
       ]
 

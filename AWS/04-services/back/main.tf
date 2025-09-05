@@ -141,15 +141,15 @@ resource "aws_ecs_task_definition" "backend" {
       secrets = [
         {
           name      = "QUARKUS_DATASOURCE_JDBC_URL"
-          valueFrom = "${var.db_credentials_secret_arn}:jdbc_url::"
+          valueFrom = "${var.db_credentials_secret_arn}:navigator_jdbc_url::"
         },
         {
           name      = "QUARKUS_DATASOURCE_USERNAME"
-          valueFrom = "${var.db_credentials_secret_arn}:username::"
+          valueFrom = "${var.db_credentials_secret_arn}:navigator_username::"
         },
         {
           name      = "QUARKUS_DATASOURCE_PASSWORD"
-          valueFrom = "${var.db_credentials_secret_arn}:password::"
+          valueFrom = "${var.db_credentials_secret_arn}:navigator_password::"
         },
         {
           name      = "QUARKUS_OIDC_AUTH_SERVER_URL"
