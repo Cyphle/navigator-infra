@@ -1,0 +1,149 @@
+name: "Deploy on AWS and Clever Cloud"
+
+inputs:
+  environment:
+    description: "L'environment d'exécution"
+    required: true
+  application:
+    description: "L'application à déployer"
+    required: true
+  product:
+    description: "Produit"
+    required: true
+  aws-account-id:
+    description: "AWS Account ID"
+    required: true
+  aws-region:
+    description: "Région AWS"
+    required: true
+  clever-token:
+    description: "Token Clever Cloud"
+    required: true
+  clever-secret:
+    description: "Secret Clever Cloud"
+    required: true
+  deploy-to-clever:
+    description: "Est-ce qu'il faut également déployer sur Clever Cloud ?"
+    required: true
+  github-sha:
+    description: "SHA1 du commit Git"
+    required: true
+
+runs:
+  using: "composite"
+
+  steps:
+    - uses: actions/checkout@v4
+
+    - name: Install Devbox
+      uses: jetify-com/devbox-install-action@v0.11.0
+
+    # for caching
+    - name: Setup Gradle
+      uses: gradle/actions/setup-gradle@v4
+
+    # BUILD BACKEND
+    # before front for kt2ts
+    - name: Build back
+      run: devbox run -- ./build-scripts/build-backend.sh
+      env:
+        APP: ${{ inputs.application }}
+      shell: bash
+
+    # BUILD FRONTEND
+    - name: Build front
+      run: devbox run -- ./build-scripts/build-frontend.sh
+      env:
+        APP: ${{ inputs.application }}
+      shell: bash
+
+    # PACKAGE
+    - name: Package
+      run: devbox run -- ./build-scripts/package.sh
+      env:
+        APP: ${{ inputs.application }}
+      shell: bash
+
+    ########################
+    #  DEPLOY CLEVERCLOUD  #
+    ########################
+    # DEPLOY
+    - name: Install Clever Cloud CLI
+      if: ${{ (inputs.environment == 'staging' || inputs.environment == 'prod') && inputs.deploy-to-clever == 'oui' }}
+      run: npm install -g clever-tools@2.11.0
+      shell: bash
+
+    - name: Deploy
+      if: ${{ (inputs.environment == 'staging' || inputs.environment == 'prod') && inputs.deploy-to-clever == 'oui' }}
+      run: ./build-scripts/deploy.sh
+      env:
+        APP: ${{ inputs.application }}
+        ENV: ${{ inputs.environment }}
+        CLEVER_TOKEN: ${{ inputs.clever-token }}
+        CLEVER_SECRET: ${{ inputs.clever-secret }}
+      shell: bash
+
+    # A remettre quand on aura décidé d'utiliser NewRelic
+    # MONITORING / NEW RELIC
+    # https://github.com/newrelic/deployment-marker-action#inputs
+    #    - name: New Relic Deployment Marker
+    #      if: inputs.environment == 'staging' || inputs.environment == 'prod'
+    #      uses: newrelic/deployment-marker-action@v2.3.0
+    #      with:
+    #        apiKey: ${{ secrets.NEW_RELIC_API_KEY }}
+    #        id: ${{ vars.NEW_RELIC_DEPLOYMENT_ENTITY_GUID }}
+    #        version: "${{ inputs.github-sha }}"
+    #        commit: "${{ inputs.github-sha }}"
+    #        groupId: "${{ inputs.github-sha }}"
+    #        deepLink: "https://github.com/Lite-eco/lite/commits/${{ inputs.github-sha }}"
+    #        user: "${{ github.actor }}"
+    #        region: EU
+
+    ################
+    #  DEPLOY AWS  #
+    ################
+    - name: Upgrade deployment files with environment information
+      uses: cschleiden/replace-tokens@v1
+      with:
+        tokenPrefix: '${'
+        tokenSuffix: '}'
+        files: '["${{ inputs.application }}/infra/*.json"]'
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: arn:aws:iam::${{ inputs.aws-account-id }}:role/${{ inputs.product }}-${{ inputs.application }}-deployer-${{ inputs.aws-region }}-${{ inputs.environment }}
+        aws-region: ${{ inputs.aws-region }}
+
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v2
+
+    - name: Build, tag, and push image to Amazon ECR
+      id: build-image
+      working-directory: .package/${{ inputs.application }}
+      env:
+        ECR_REGISTRY: ${{ inputs.aws-account-id }}.dkr.ecr.${{ inputs.aws-region }}.amazonaws.com
+        ECR_REPOSITORY: ${{ inputs.product }}-${{ inputs.application }}-${{ inputs.environment }}
+        IMAGE_TAG: ${{ inputs.github-sha }}
+      run: |
+        docker build -f Dockerfile -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG . --build-arg COMMIT_HASH=${{ inputs.github-sha }}
+        docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+        echo "image=$ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG" >> $GITHUB_OUTPUT
+      shell: bash
+
+    - name: Fill in the new image ID in the Amazon ECS task definition
+      id: task-def
+      uses: aws-actions/amazon-ecs-render-task-definition@v1
+      with:
+        task-definition: ${{ inputs.application }}/infra/task-definition-${{ inputs.application }}.json
+        container-name: ${{ inputs.application }}
+        image: ${{ steps.build-image.outputs.image }}
+
+    - name: Deploy Amazon ECS task definition
+      uses: aws-actions/amazon-ecs-deploy-task-definition@v2
+      with:
+        task-definition: ${{ steps.task-def.outputs.task-definition }}
+        service: ${{ inputs.application }}
+        cluster: ${{ inputs.product }}-${{ inputs.application }}-${{ inputs.environment }}
+        wait-for-service-stability: true

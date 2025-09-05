@@ -16,7 +16,7 @@ resource "aws_ecs_cluster" "backend" {
 resource "aws_ecs_cluster_capacity_providers" "backend" {
   cluster_name = aws_ecs_cluster.backend.name
 
-  capacity_providers = ["FARGATE", "FARGATE_SPOT"]
+  capacity_providers = ["FARGATE"]
 
   default_capacity_provider_strategy {
     base              = 1
@@ -217,7 +217,7 @@ resource "aws_ecs_service" "backend" {
 
 # Auto Scaling Target
 resource "aws_appautoscaling_target" "backend" {
-  max_capacity       = 3
+  max_capacity       = 1
   min_capacity       = 1
   resource_id        = "service/${aws_ecs_cluster.backend.name}/${aws_ecs_service.backend.name}"
   scalable_dimension = "ecs:service:DesiredCount"

@@ -7,4 +7,11 @@ terraform {
       version = "~> 5.0"
     }
   }
+
+  backend "s3" {
+    bucket  = "navigator-state"
+    key     = "terraform/navigator-front.tfstate"
+    region  = "us-east-1"  # Change this to your preferred region
+    encrypt = true
+  }
 }
