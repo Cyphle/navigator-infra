@@ -2,7 +2,7 @@
 
 # ALB
 resource "aws_lb" "main" {
-  name               = "${local.name_prefix}-alb"
+  name               = "${var.project_name}-alb"
   internal           = false
   load_balancer_type = "application"
   security_groups    = [aws_security_group.alb.id]
@@ -15,7 +15,7 @@ resource "aws_lb" "main" {
 
 # ALB Target Groups
 resource "aws_lb_target_group" "frontend" {
-  name        = "${local.name_prefix}-frontend-tg"
+  name        = "${var.project_name}-frontend-tg"
   port        = 80
   protocol    = "HTTP"
   vpc_id      = data.terraform_remote_state.vpc.outputs.vpc_id
@@ -37,7 +37,7 @@ resource "aws_lb_target_group" "frontend" {
 }
 
 resource "aws_lb_target_group" "backend" {
-  name        = "${local.name_prefix}-backend-tg"
+  name        = "${var.project_name}-backend-tg"
   port        = 8080
   protocol    = "HTTP"
   vpc_id      = data.terraform_remote_state.vpc.outputs.vpc_id
@@ -59,7 +59,7 @@ resource "aws_lb_target_group" "backend" {
 }
 
 resource "aws_lb_target_group" "keycloak" {
-  name        = "${local.name_prefix}-keycloak-tg"
+  name        = "${var.project_name}-keycloak-tg"
   port        = 8080
   protocol    = "HTTP"
   vpc_id      = data.terraform_remote_state.vpc.outputs.vpc_id

@@ -18,7 +18,7 @@ resource "random_password" "keycloak_password" {
 
 # Store database credentials in Secrets Manager
 resource "aws_secretsmanager_secret" "db_credentials" {
-  name                    = "${var.name_prefix}-db-credentials"
+  name                    = "${var.project_name}-db-credentials"
   description             = "Database credentials for Navigator application"
   recovery_window_in_days = 7
 
@@ -52,7 +52,7 @@ resource "aws_secretsmanager_secret_version" "db_credentials" {
 # RDS Parameter Group
 resource "aws_db_parameter_group" "main" {
   family = "postgres16"
-  name   = "${var.name_prefix}-db-params"
+  name   = "${var.project_name}-db-params"
 
   parameter {
     name  = "log_statement"
@@ -69,7 +69,7 @@ resource "aws_db_parameter_group" "main" {
 
 # RDS Instance
 resource "aws_db_instance" "main" {
-  identifier = "${var.name_prefix}-db"
+  identifier = "${var.project_name}-db"
 
   # Engine configuration
   engine         = "postgres"
@@ -108,16 +108,16 @@ resource "aws_db_instance" "main" {
   # Deletion protection
   deletion_protection = true
   skip_final_snapshot = false
-  final_snapshot_identifier = "${var.name_prefix}-db-final-snapshot-${formatdate("YYYY-MM-DD-hhmm", timestamp())}"
+  final_snapshot_identifier = "${var.project_name}-db-final-snapshot-${formatdate("YYYY-MM-DD-hhmm", timestamp())}"
 
   tags = merge(var.common_tags, {
-    Name = "${var.name_prefix}-db"
+    Name = "${var.project_name}-db"
   })
 }
 
 # IAM Role for RDS Enhanced Monitoring
 resource "aws_iam_role" "rds_enhanced_monitoring" {
-  name = "${var.name_prefix}-rds-monitoring-role"
+  name = "${var.project_name}-rds-monitoring-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"

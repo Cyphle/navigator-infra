@@ -1,15 +1,3 @@
-variable "name_prefix" {
-  description = "Prefix for resource names"
-  type        = string
-  default     = "navigator"
-}
-
-variable "aws_region" {
-  description = "AWS region"
-  type        = string
-  default     = "eu-west-3"
-}
-
 variable "common_tags" {
   description = "Common tags for all resources"
   type        = map(string)

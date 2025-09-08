@@ -8,7 +8,7 @@ resource "random_password" "keycloak_admin_password" {
 
 # Store Keycloak credentials in Secrets Manager
 resource "aws_secretsmanager_secret" "keycloak_credentials" {
-  name                    = "${var.name_prefix}-keycloak-credentials"
+  name                    = "${var.project_name}-keycloak-credentials"
   description             = "Keycloak credentials for Navigator application"
   recovery_window_in_days = 7
 
@@ -21,7 +21,7 @@ resource "aws_secretsmanager_secret_version" "keycloak_credentials" {
     admin_user     = var.keycloak_config.admin_user
     admin_password = random_password.keycloak_admin_password.result
     realm_name     = var.keycloak_config.realm_name
-    auth_server_url = "http://keycloak.${var.name_prefix}.local:8080"
+    auth_server_url = "http://keycloak.${var.project_name}.local:8080"
     client_id      = "navigator"
     client_secret  = "navigator-secret"
   })
@@ -29,7 +29,7 @@ resource "aws_secretsmanager_secret_version" "keycloak_credentials" {
 
 # ECS Cluster for Keycloak
 resource "aws_ecs_cluster" "keycloak" {
-  name = "${var.name_prefix}-keycloak-cluster"
+  name = "${var.project_name}-keycloak-cluster"
 
   setting {
     name  = "containerInsights"
@@ -54,7 +54,7 @@ resource "aws_ecs_cluster_capacity_providers" "keycloak" {
 
 # ECS Task Execution Role
 resource "aws_iam_role" "keycloak_task_execution_role" {
-  name = "${var.name_prefix}-keycloak-task-execution-role"
+  name = "${var.project_name}-keycloak-task-execution-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -79,7 +79,7 @@ resource "aws_iam_role_policy_attachment" "keycloak_task_execution_role_policy" 
 
 # Additional policy for Secrets Manager access
 resource "aws_iam_role_policy" "keycloak_task_execution_secrets" {
-  name = "${var.name_prefix}-keycloak-secrets-policy"
+  name = "${var.project_name}-keycloak-secrets-policy"
   role = aws_iam_role.keycloak_task_execution_role.id
 
   policy = jsonencode({
@@ -100,7 +100,7 @@ resource "aws_iam_role_policy" "keycloak_task_execution_secrets" {
 
 # ECS Task Role (for application-level permissions)
 resource "aws_iam_role" "keycloak_task_role" {
-  name = "${var.name_prefix}-keycloak-task-role"
+  name = "${var.project_name}-keycloak-task-role"
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17"
@@ -120,7 +120,7 @@ resource "aws_iam_role" "keycloak_task_role" {
 
 # CloudWatch Log Group
 resource "aws_cloudwatch_log_group" "keycloak" {
-  name              = "/ecs/${var.name_prefix}-keycloak"
+  name              = "/ecs/${var.project_name}-keycloak"
   retention_in_days = 7
 
   tags = var.common_tags
@@ -128,7 +128,7 @@ resource "aws_cloudwatch_log_group" "keycloak" {
 
 # ECS Task Definition for Keycloak
 resource "aws_ecs_task_definition" "keycloak" {
-  family                   = "${var.name_prefix}-keycloak"
+  family                   = "${var.project_name}-keycloak"
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
   cpu                      = var.ecs_config.cpu
@@ -222,7 +222,7 @@ resource "aws_ecs_task_definition" "keycloak" {
 
 # ECS Service for Keycloak
 resource "aws_ecs_service" "keycloak" {
-  name            = "${var.name_prefix}-keycloak-service"
+  name            = "${var.project_name}-keycloak-service"
   cluster         = aws_ecs_cluster.keycloak.id
   task_definition = aws_ecs_task_definition.keycloak.arn
   desired_count   = var.ecs_config.desired_count
@@ -256,7 +256,7 @@ resource "aws_appautoscaling_target" "keycloak" {
 
 # Auto Scaling Policy
 resource "aws_appautoscaling_policy" "keycloak" {
-  name               = "${var.name_prefix}-keycloak-scaling"
+  name               = "${var.project_name}-keycloak-scaling"
   policy_type        = "TargetTrackingScaling"
   resource_id        = aws_appautoscaling_target.keycloak.resource_id
   scalable_dimension = aws_appautoscaling_target.keycloak.scalable_dimension

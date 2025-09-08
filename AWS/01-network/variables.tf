@@ -1,7 +1,7 @@
 variable "aws_region" {
   description = "AWS region for resources"
   type        = string
-  default     = "us-east-1"
+  default     = "eu-west-3"
 }
 
 variable "project_name" {
@@ -16,21 +16,15 @@ variable "environment" {
   default     = "prod"
 }
 
-variable "name_prefix" {
-  description = "Name prefix for resources"
-  type        = string
+variable "availability_zones" {
+  description = "List of availability zones"
+  type        = list(string)
 }
 
 locals {
-  name_prefix = "${var.project_name}-${var.environment}"
   common_tags = {
     Project     = var.project_name
     Environment = var.environment
     ManagedBy   = "terraform"
   }
-}
-
-variable "common_tags" {
-  description = "Common tags for all resources"
-  type        = map(string)
 }

@@ -322,7 +322,6 @@ resource "aws_lb_listener_rule" "pro" {
 }
 
 # Service access
-
 resource "aws_security_group_rule" "pro_https_output_access" {
   description       = "Service ${var.application} https egress access"
   type              = "egress"

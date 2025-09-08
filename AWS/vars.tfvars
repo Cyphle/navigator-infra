@@ -20,3 +20,6 @@ database_config = {
   backup_window          = "03:00-04:00"
   maintenance_window     = "sun:04:00-sun:05:00"
 }
+
+# ECS
+github_claim_suffixes = ["environment:prod"]

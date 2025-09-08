@@ -7,7 +7,7 @@ resource "aws_vpc" "main" {
   enable_dns_support   = true
 
   tags = merge(local.common_tags, {
-    Name = "${local.name_prefix}-vpc"
+    Name = "${var.project_name}-vpc"
   })
 }
 
@@ -16,7 +16,7 @@ resource "aws_internet_gateway" "main" {
   vpc_id = aws_vpc.main.id
 
   tags = merge(local.common_tags, {
-    Name = "${local.name_prefix}-igw"
+    Name = "${var.project_name}-igw"
   })
 }
 
@@ -30,7 +30,7 @@ resource "aws_subnet" "public" {
   map_public_ip_on_launch = true
 
   tags = merge(local.common_tags, {
-    Name = "${local.name_prefix}-public-subnet-${count.index + 1}"
+    Name = "${var.project_name}-public-subnet-${count.index + 1}"
     Type = "public"
   })
 }
@@ -44,7 +44,7 @@ resource "aws_subnet" "private" {
   availability_zone = var.availability_zones[count.index]
 
   tags = merge(local.common_tags, {
-    Name = "${local.name_prefix}-private-subnet-${count.index + 1}"
+    Name = "${var.project_name}-private-subnet-${count.index + 1}"
     Type = "private"
   })
 }
@@ -58,7 +58,7 @@ resource "aws_subnet" "database" {
   availability_zone = var.availability_zones[count.index]
 
   tags = merge(local.common_tags, {
-    Name = "${local.name_prefix}-database-subnet-${count.index + 1}"
+    Name = "${var.project_name}-database-subnet-${count.index + 1}"
     Type = "database"
   })
 }
@@ -73,7 +73,7 @@ resource "aws_route_table" "public" {
   }
 
   tags = merge(local.common_tags, {
-    Name = "${local.name_prefix}-public-rt"
+    Name = "${var.project_name}-public-rt"
   })
 }
 
@@ -85,7 +85,7 @@ resource "aws_route_table" "private" {
   # No internet route - access AWS services via VPC endpoints
 
   tags = merge(local.common_tags, {
-    Name = "${local.name_prefix}-private-rt-${count.index + 1}"
+    Name = "${var.project_name}-private-rt-${count.index + 1}"
   })
 }
 
@@ -93,7 +93,7 @@ resource "aws_route_table" "database" {
   vpc_id = aws_vpc.main.id
 
   tags = merge(local.common_tags, {
-    Name = "${local.name_prefix}-database-rt"
+    Name = "${var.project_name}-database-rt"
   })
 }
 
@@ -121,10 +121,10 @@ resource "aws_route_table_association" "database" {
 
 # Database Subnet Group
 resource "aws_db_subnet_group" "main" {
-  name       = "${local.name_prefix}-db-subnet-group"
+  name       = "${var.project_name}-db-subnet-group"
   subnet_ids = aws_subnet.database[*].id
 
   tags = merge(local.common_tags, {
-    Name = "${local.name_prefix}-db-subnet-group"
+    Name = "${var.project_name}-db-subnet-group"
   })
 }

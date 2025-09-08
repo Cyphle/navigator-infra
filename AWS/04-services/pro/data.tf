@@ -1,5 +1,3 @@
-data "aws_region" "current" {}
-
 data "aws_vpc" "core" {
   tags = {
     Name = "${var.product}-${var.environment}"

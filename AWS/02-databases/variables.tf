@@ -1,9 +1,3 @@
-variable "aws_region" {
-  description = "AWS region for resources"
-  type        = string
-  default     = "us-east-1"
-}
-
 variable "project_name" {
   description = "Name of the project"
   type        = string
@@ -14,11 +8,6 @@ variable "environment" {
   description = "Environment name"
   type        = string
   default     = "prod"
-}
-
-variable "name_prefix" {
-  description = "Name prefix for resources"
-  type        = string
 }
 
 variable "common_tags" {
@@ -49,7 +38,6 @@ variable "database_security_group_id" {
 }
 
 locals {
-  name_prefix = "${var.project_name}-${var.environment}"
   common_tags = {
     Project     = var.project_name
     Environment = var.environment
