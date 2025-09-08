@@ -89,7 +89,7 @@ resource "aws_db_instance" "main" {
 
   # Network configuration
   db_subnet_group_name   = var.database_subnet_group_name
-  vpc_security_group_ids = [var.database_security_group_id]
+  vpc_security_group_ids = [aws_security_group.postgres_server.id]
   publicly_accessible    = false
 
   # Backup configuration

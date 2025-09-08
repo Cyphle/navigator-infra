@@ -32,11 +32,6 @@ variable "database_subnet_group_name" {
   type        = string
 }
 
-variable "database_security_group_id" {
-  description = "ID of the database security group"
-  type        = string
-}
-
 locals {
   common_tags = {
     Project     = var.project_name

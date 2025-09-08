@@ -196,14 +196,14 @@ resource "aws_security_group_rule" "alb_to_app_access" {
   security_group_id        = data.aws_security_group.apps_alb.id
 }
 
-resource "aws_security_group_rule" "keycloak_db_access" {
-  description              = "Service keycloak access"
-  type                     = "ingress"
+resource "aws_security_group_rule" "keycloak_to_postgres_clients" {
+  description              = "Allow keycloak service to connect to postgres clients"
+  type                     = "egress"
   from_port                = 5432
   to_port                  = 5432
   protocol                 = "tcp"
-  source_security_group_id = aws_security_group.keycloak_service.id
-  security_group_id        = data.aws_security_group.posgres.id
+  source_security_group_id = data.aws_security_group.postgres_clients.id
+  security_group_id        = aws_security_group.keycloak_service.id
 }
 
 # Secret manager

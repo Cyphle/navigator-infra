@@ -31,3 +31,10 @@ data "aws_security_group" "apps_alb" {
     values = ["${var.project_name}-alb-sg"]
   }
 }
+
+data "aws_security_group" "postgres_clients" {
+  filter {
+    name   = "tag:Name"
+    values = ["${var.project_name}-postgresql-clients-${var.environment}"]
+  }
+}
