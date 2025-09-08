@@ -78,3 +78,12 @@ variable "frontend_rule_priority" {
   type        = number
   default     = 10
 }
+
+variable "domain_names" {
+  description = "Domain names for the application"
+  type = object({
+    frontend = list(string)
+    auth     = list(string)
+    back     = list(string)
+  })
+}

@@ -1,7 +1,3 @@
-data "aws_ecr_repository" "frontend" {
-  name = "${var.project_name}-frontend"
-}
-
 data "aws_vpc" "core" {
   tags = {
     Name = "${var.project_name}-${var.environment}"
@@ -20,3 +16,18 @@ data "aws_subnets" "private" {
   }
 }
 
+data "aws_alb" "apps" {
+  name = "${var.project_name}-alb"
+}
+
+data "aws_alb_listener" "https" {
+  load_balancer_arn = data.aws_alb.apps.arn
+  port              = 443
+}
+
+data "aws_security_group" "apps_alb" {
+  filter {
+    name   = "tag:Name"
+    values = ["${var.project_name}-alb-sg"]
+  }
+}

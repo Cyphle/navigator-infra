@@ -1,4 +1,4 @@
-resource "aws_ecr_repository" "pro" {
+resource "aws_ecr_repository" "frontend" {
   name                 = "${var.project_name}-frontend-${var.environment}"
   force_delete         = true
   image_tag_mutability = "IMMUTABLE"
@@ -7,8 +7,8 @@ resource "aws_ecr_repository" "pro" {
   }
 }
 
-resource "aws_ecr_lifecycle_policy" "pro" {
-  repository = aws_ecr_repository.pro.name
+resource "aws_ecr_lifecycle_policy" "frontend" {
+  repository = aws_ecr_repository.frontend.name
   policy     = <<EOF
 {
   "rules": [

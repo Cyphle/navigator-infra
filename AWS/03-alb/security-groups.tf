@@ -2,7 +2,7 @@
 
 # ALB Security Group
 resource "aws_security_group" "alb" {
-  name_prefix = "${local.name_prefix}-alb-"
+  name_prefix = "${var.project_name}-alb-"
   vpc_id      = data.terraform_remote_state.vpc.outputs.vpc_id
 
   ingress {
@@ -29,7 +29,7 @@ resource "aws_security_group" "alb" {
   }
 
   tags = merge(local.common_tags, {
-    Name = "${local.name_prefix}-alb-sg"
+    Name = "${var.project_name}-alb-sg"
   })
 
   lifecycle {

@@ -114,7 +114,7 @@ resource "aws_ecs_task_definition" "frontend" {
 [
   {
     "cpu": ${var.fargate_cpu},
-    "image": "${data.aws_ecr_repository.frontend.repository_url}",
+    "image": "${aws_ecr_repository.frontend.repository_url}",
     "memory": ${var.fargate_memory},
     "name": "${var.frontend_container_name}",
     "linuxParameters":
@@ -160,6 +160,7 @@ resource "aws_security_group" "frontend_service" {
   }
 }
 
+# ECS Service
 resource "aws_ecs_service" "frontend" {
   name                              = "frontend"
   cluster                           = aws_ecs_cluster.frontend.id
@@ -185,42 +186,11 @@ resource "aws_ecs_service" "frontend" {
     ignore_changes = [desired_count, load_balancer, task_definition, capacity_provider_strategy]
   }
 
-  depends_on = [data.aws_alb_listener.apps_443]
+  depends_on = [data.aws_alb_listener.https]
 }
 
+# ALB
 
-resource "aws_alb_target_group" "pro" {
-  name                 = "${var.project_name}-frontend-${var.environment}"
-  port                 = var.frontend_port
-  protocol             = "HTTP"
-  vpc_id               = data.aws_vpc.core.id
-  target_type          = "ip"
-  deregistration_delay = 60
-  health_check {
-    healthy_threshold   = 3
-    unhealthy_threshold = 3
-    timeout             = 5
-    interval            = 10
-    path                = var.frontend_health_check_path
-    port                = var.frontend_port
-    matcher             = "200"
-  }
-}
-
-resource "aws_lb_listener_rule" "pro" {
-  listener_arn = data.aws_alb_listener.apps_443.arn
-  priority     = var.frontend_rule_priority
-
-  action {
-    target_group_arn = aws_alb_target_group.pro.arn
-    type             = "forward"
-  }
-  condition {
-    host_header {
-      values = local.service_urls
-    }
-  }
-}
 
 
 # Service access
