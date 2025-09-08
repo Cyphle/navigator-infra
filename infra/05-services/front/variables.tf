@@ -24,7 +24,7 @@ variable "github_claim_suffixes" {
 variable "github_repository" {
   description = "GitHub repository to allow assuming role from OIDC provider"
   type        = string
-  default     = "navigator-back"
+  default     = "navigator-front"
 }
 
 variable "fargate_cpu" {
@@ -37,22 +37,22 @@ variable "fargate_memory" {
   type        = number
 }
 
-variable "backend_port" {
-  description = "Port of backend"
+variable "frontend_port" {
+  description = "Port of frontend"
   type        = number
   default     = 8080
 }
 
-variable "backend_health_check_path" {
+variable "frontend_health_check_path" {
   description = "URI used by ALB to check target health"
   type        = string
-  default     = "/health/ready"
+  default     = "/"
 }
 
-variable "backend_container_name" {
+variable "frontend_container_name" {
   description = "Name of the main container"
   type        = string
-  default     = "backend"
+  default     = "frontend"
 }
 
 variable "log_retention_in_days" {
@@ -61,19 +61,13 @@ variable "log_retention_in_days" {
   default     = 7
 }
 
-variable "backend_desired_tasks_count" {
+variable "frontend_desired_tasks_count" {
   description = "Number of containers to execute in parallel"
   type        = number
   default     = 1
 }
 
-variable "ecr_images_retention_in_days" {
-  description = "Retention duration of old images"
-  type        = number
-  default     = 10
-}
-
-variable "backend_rule_priority" {
+variable "frontend_rule_priority" {
   description = "Rule priority for ALB listener"
   type        = number
   default     = 10
@@ -82,7 +76,7 @@ variable "backend_rule_priority" {
 variable "domain_names" {
   description = "Domain names for the application"
   type = object({
-    backend = list(string)
+    frontend = list(string)
     auth     = list(string)
     back     = list(string)
   })
