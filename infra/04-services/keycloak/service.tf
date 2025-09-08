@@ -110,9 +110,66 @@ resource "aws_ecs_task_definition" "keycloak" {
     cpu_architecture = "X86_64"
   }
 
-  # TODO Il faut mettre le vrai task definition là
   container_definitions = <<DEFINITION
-
+{
+    "cpu": "${var.fargate_cpu}",
+    "memory": "${var.fargate_memory}",
+    "volumes": [],
+    "networkMode": "awsvpc",
+    "family": "${var.project_name}-keycloak-${var.environment}",
+    "requiresCompatibilities": ["FARGATE"],
+    "placementConstraints": [],
+    "executionRoleArn": "arn:aws:iam::${var.aws_account_id}:role/${var.project_name}-keycloak-ecs-taskexec-${var.region}-${var.environment}",
+    "taskRoleArn": "arn:aws:iam::${var.aws_account_id}:role/${var.project_name}-keycloak-ecs-task-${var.region}-${var.environment}",
+    "containerDefinitions": [
+      {
+        "name": "keycloak",
+        "cpu": ${var.fargate_cpu},
+        "memory": ${var.fargate_memory},
+        "linuxParameters": {
+          "initProcessEnabled": true
+        },
+        "essential": true,
+        "volumesFrom": [],
+        "mountPoints": [],
+        "image": "quay.io/keycloak/keycloak:26.3.3",
+        "entryPoint": ["/opt/keycloak/bin/kc.sh"],
+        "command": ["start"],
+        "portMappings": [
+          {
+            "protocol": "tcp",
+            "containerPort": ${var.keycloak_port},
+            "hostPort": ${var.keycloak_port}
+          },
+          {
+            "protocol": "management",
+            "containerPort": ${var.keycloak_management_port},
+            "hostPort": ${var.keycloak_management_port}
+          }
+        ],
+        "environment": [
+          {
+            "name": "AWS_REGION",
+            "value": "${var.region}"
+          }
+        ],
+        "secrets": [
+        {
+          "name": "KC_DB",
+          "valueFrom": "${aws_secretsmanager_secret.ecs_service_app_config.arn}:KC_DB::"
+        }
+      ],
+        "logConfiguration": {
+          "logDriver": "awslogs",
+          "options": {
+            "awslogs-group": "/fargate/service/${var.project_name}-keycloak-${var.environment}",
+            "awslogs-region": "${var.region}",
+            "awslogs-stream-prefix": "ecs"
+          }
+        }
+      }
+    ]
+  }
 DEFINITION
   lifecycle {
     ignore_changes = [container_definitions]
@@ -204,20 +261,4 @@ resource "aws_security_group_rule" "keycloak_to_postgres_clients" {
   protocol                 = "tcp"
   source_security_group_id = data.aws_security_group.postgres_clients.id
   security_group_id        = aws_security_group.keycloak_service.id
-}
-
-# Secret manager
-resource "aws_secretsmanager_secret" "ecs_service_app_config" {
-  name        = "${var.project_name}-keycloak-ecs-service-app-config-${var.environment}"
-  description = "ECS service app config envs"
-}
-
-resource "aws_secretsmanager_secret_version" "ecs_service_app_config" {
-  secret_id                = aws_secretsmanager_secret.ecs_service_app_config.id
-  secret_string_wo_version = 1
-  secret_string_wo = jsonencode(
-    {
-      ENV                          = var.environment,
-    }
-  )
 }

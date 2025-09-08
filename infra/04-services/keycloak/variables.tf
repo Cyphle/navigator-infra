@@ -38,9 +38,15 @@ variable "fargate_memory" {
 }
 
 variable "keycloak_port" {
-  description = "Port of frontend"
+  description = "Port of keycloak"
   type        = number
   default     = 8080
+}
+
+variable "keycloak_management_port" {
+  description = "Port of keycloak management"
+  type        = number
+  default     = 9000
 }
 
 variable "keycloak_health_check_path" {
@@ -86,4 +92,9 @@ variable "domain_names" {
     auth     = list(string)
     back     = list(string)
   })
+}
+
+variable "aws_account_id" {
+  description = "AWS Account ID"
+  type = string
 }
