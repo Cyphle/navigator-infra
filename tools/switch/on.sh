@@ -90,7 +90,7 @@ build_and_push_images() {
     KEYCLOAK_REPO=$(terraform output -raw keycloak_ecr_repository_url)
     
     # Login to ECR
-    aws ecr get-login-password --region us-east-1 | docker login --username AWS --password-stdin $FRONTEND_REPO
+    aws ecr get-login-password --region eu-west-3 | docker login --username AWS --password-stdin $FRONTEND_REPO
     
     # Build and push frontend image
     print_status "Building frontend image..."

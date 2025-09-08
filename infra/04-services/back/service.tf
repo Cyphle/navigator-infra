@@ -1,0 +1,244 @@
+resource "aws_iam_role" "backend_taskexec" {
+  name               = "${var.project_name}-backend-ecs-taskexec-${var.region}-${var.environment}"
+  assume_role_policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "",
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "ecs-tasks.amazonaws.com"
+      },
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}
+EOF
+}
+
+resource "aws_iam_role_policy" "secret_access" {
+  name = "${var.project_name}-secret-${var.region}-${var.environment}"
+  role = aws_iam_role.backend_taskexec.name
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "secretsmanager:GetSecretValue"
+        ]
+        Resource = [
+          aws_secretsmanager_secret.ecs_service_app_config.arn
+        ]
+      },
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "ecs_task_amazonecstaskexecutionrolepolicy" {
+  role       = aws_iam_role.backend_taskexec.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+}
+
+resource "aws_iam_role" "backend_task" {
+  name               = "${var.project_name}-backend-ecs-task-${var.region}-${var.environment}"
+  assume_role_policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "",
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "ecs-tasks.amazonaws.com"
+      },
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}
+EOF
+}
+
+resource "aws_iam_policy" "ssmmessages_access" {
+  name = "${var.project_name}-ecs-ssmmessages-${var.region}-${var.environment}"
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "ssmmessages:CreateControlChannel",
+          "ssmmessages:CreateDataChannel",
+          "ssmmessages:OpenControlChannel",
+          "ssmmessages:OpenDataChannel"
+        ]
+        Resource = "*"
+      },
+    ]
+  })
+}
+
+resource "aws_iam_policy" "backend_access" {
+  name = "${var.project_name}-app-access-${var.region}-${var.environment}"
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachments_exclusive" "backend_task" {
+  role_name = aws_iam_role.backend_task.name
+  policy_arns = [
+    aws_iam_policy.ssmmessages_access.arn,
+    aws_iam_policy.backend_access.arn
+  ]
+}
+
+resource "aws_ecs_task_definition" "backend" {
+  family                   = "${var.project_name}-backend-${var.environment}"
+  network_mode             = "awsvpc"
+  requires_compatibilities = ["FARGATE"]
+  cpu                      = var.fargate_cpu
+  memory                   = var.fargate_memory
+  task_role_arn            = aws_iam_role.backend_task.arn
+  execution_role_arn       = aws_iam_role.backend_taskexec.arn
+
+  runtime_platform {
+    operating_system_family = "LINUX"
+    cpu_architecture        = "X86_64"
+  }
+
+  container_definitions = <<DEFINITION
+[
+  {
+    "cpu": ${var.fargate_cpu},
+    "image": "${aws_ecr_repository.backend.repository_url}",
+    "memory": ${var.fargate_memory},
+    "name": "${var.backend_container_name}",
+    "linuxParameters":
+      {
+        "initProcessEnabled": true
+      },
+    "portMappings": [
+      {
+        "containerPort": ${var.backend_port},
+        "hostPort": ${var.backend_port}
+      }
+    ],
+    "logConfiguration": {
+      "logDriver": "awslogs",
+      "options": {
+        "awslogs-group": "${aws_cloudwatch_log_group.backend.name}",
+        "awslogs-region": "${var.region.current.name}",
+        "awslogs-stream-prefix": "ecs"
+      }
+    }
+  }
+]
+DEFINITION
+  lifecycle {
+    ignore_changes = [container_definitions]
+  }
+}
+
+resource "aws_cloudwatch_log_group" "backend" {
+  name              = "/fargate/service/${var.project_name}-backend-${var.environment}"
+  retention_in_days = var.log_retention_in_days
+}
+
+resource "aws_security_group" "backend_service" {
+  name_prefix = "${var.project_name}-backend-service-${var.environment}-"
+  description = "backend container SecurityGroup"
+  vpc_id      = data.aws_vpc.core.id
+  tags = {
+    Name = "${var.project_name}-backend-service-${var.environment}",
+  }
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+# ECS Service
+resource "aws_ecs_service" "backend" {
+  name                              = "backend"
+  cluster                           = aws_ecs_cluster.backend.id
+  task_definition                   = aws_ecs_task_definition.backend.arn
+  desired_count                     = var.backend_desired_tasks_count
+  launch_type                       = "FARGATE"
+  propagate_tags                    = "SERVICE"
+  enable_execute_command            = true
+  health_check_grace_period_seconds = 600
+
+  network_configuration {
+    security_groups = [aws_security_group.backend_service.id]
+    subnets         = data.aws_subnets.private.ids
+  }
+
+  load_balancer {
+    target_group_arn = aws_alb_target_group.backend.id
+    container_name   = var.backend_container_name
+    container_port   = var.backend_port
+  }
+
+  lifecycle {
+    ignore_changes = [desired_count, load_balancer, task_definition, capacity_provider_strategy]
+  }
+
+  depends_on = [data.aws_alb_listener.https]
+}
+
+# Service access
+resource "aws_security_group_rule" "backend_https_output_access" {
+  description       = "Service backend https egress access"
+  type              = "egress"
+  from_port         = 443
+  to_port           = 443
+  protocol          = "tcp"
+  security_group_id = aws_security_group.backend_service.id
+  cidr_blocks       = ["0.0.0.0/0"]
+}
+
+resource "aws_security_group_rule" "app_from_alb_access" {
+  description              = "Allow traffic from ALB to backend"
+  type                     = "ingress"
+  from_port                = var.backend_port
+  to_port                  = var.backend_port
+  protocol                 = "tcp"
+  security_group_id        = aws_security_group.backend_service.id
+  source_security_group_id = data.aws_security_group.apps_alb.id
+}
+
+resource "aws_security_group_rule" "alb_to_app_access" {
+  description              = "Allow traffic from ALB to backend"
+  type                     = "egress"
+  from_port                = var.backend_port
+  to_port                  = var.backend_port
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.backend_service.id
+  security_group_id        = data.aws_security_group.apps_alb.id
+}
+
+resource "aws_security_group_rule" "backendto_postgres_clients" {
+  description              = "Allow keycloak service to connect to postgres clients"
+  type                     = "egress"
+  from_port                = 5432
+  to_port                  = 5432
+  protocol                 = "tcp"
+  source_security_group_id = data.aws_security_group.postgres_clients.id
+  security_group_id        = aws_security_group.backend_service.id
+}
+
+# DNS Record is in Route53
+# resource "aws_route53_record" "alb_api" {
+#   zone_id = data.aws_route53_zone.main.zone_id
+#   name    = local.service_url
+#   type    = "A"
+#   alias {
+#     name                   = data.aws_alb.apps.dns_name
+#     zone_id                = data.aws_alb.apps.zone_id
+#     evaluate_target_health = false
+#   }
+# }
+

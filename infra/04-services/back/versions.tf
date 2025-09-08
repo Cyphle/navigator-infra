@@ -14,7 +14,7 @@ terraform {
 
   backend "s3" {
     bucket  = "navigator-state"
-    key     = "terraform/navigator-front.tfstate"
+    key     = "terraform/navigator-back.tfstate"
     region  = "eu-west-3"
     encrypt = true
   }
