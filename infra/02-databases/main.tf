@@ -115,6 +115,42 @@ resource "aws_db_instance" "main" {
   })
 }
 
+resource "aws_security_group" "postgres_clients" {
+  #checkov:skip=CKV2_AWS_5:The security is attached to RDS but not EC2. Avoid false positive
+  name_prefix = "${var.project_name}-postgresql-clients-${var.environment}-"
+  description = "Security group for clients"
+  vpc_id      = data.aws_vpc.main.id
+  tags = {
+    Name = "${var.project_name}-postgresql-clients-${var.environment}",
+  }
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+resource "aws_security_group" "postgres_server" {
+  #checkov:skip=CKV2_AWS_5:The security is attached to RDS but not EC2. Avoid false positive
+  name_prefix = "${var.project_name}-postgresql-server-${var.environment}-"
+  description = "Security group for shared database server"
+  vpc_id      = data.aws_vpc.main.id
+  tags = {
+    Name = "${var.project_name}-postgresql-server-${var.environment}",
+  }
+  lifecycle {
+    create_before_destroy = true
+  }
+}
+
+resource "aws_security_group_rule" "postgresql_server_rds_client" {
+  description              = "Allow postgresql from rds_client sg"
+  type                     = "ingress"
+  from_port                = 5432
+  to_port                  = 5432
+  protocol                 = "tcp"
+  source_security_group_id = aws_security_group.postgres_clients.id
+  security_group_id        = aws_security_group.postgres_server.id
+}
+
 # IAM Role for RDS Enhanced Monitoring
 resource "aws_iam_role" "rds_enhanced_monitoring" {
   name = "${var.project_name}-rds-monitoring-role"
