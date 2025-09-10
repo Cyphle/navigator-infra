@@ -23,10 +23,6 @@ resource "aws_secretsmanager_secret" "db_credentials" {
   recovery_window_in_days = 7
 
   tags = local.common_tags
-
-  lifecycle {
-    prevent_destroy = true
-  }
 }
 
 resource "aws_secretsmanager_secret_version" "db_credentials_initial" {
