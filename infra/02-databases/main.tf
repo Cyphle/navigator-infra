@@ -157,6 +157,16 @@ resource "aws_security_group_rule" "postgresql_server_rds_client" {
   security_group_id        = aws_security_group.postgres_server.id
 }
 
+resource "aws_security_group_rule" "postgresql_server_vpc_access" {
+  description       = "Allow postgresql from VPC CIDR blocks"
+  type              = "ingress"
+  from_port         = 5432
+  to_port           = 5432
+  protocol          = "tcp"
+  cidr_blocks       = [data.aws_vpc.main.cidr_block]
+  security_group_id = aws_security_group.postgres_server.id
+}
+
 # IAM Role for RDS Enhanced Monitoring
 resource "aws_iam_role" "rds_enhanced_monitoring" {
   name = "${var.project_name}-rds-monitoring-role"

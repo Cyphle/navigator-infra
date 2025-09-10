@@ -1,15 +1,11 @@
 #!/bin/bash
 
 # Update system packages
-yum update -y
-
-# Ensure SSM Agent is installed and running (usually pre-installed on Amazon Linux 2)
-yum install -y amazon-ssm-agent
-systemctl enable amazon-ssm-agent
-systemctl start amazon-ssm-agent
+apt update -y
+apt upgrade -y
 
 # Install useful tools for bastion host
-yum install -y \
+apt install -y \
     htop \
     vim \
     git \
@@ -17,10 +13,16 @@ yum install -y \
     wget \
     unzip \
     jq \
-    awscli2
+    awscli \
+    postgresql-client
+
+# Ensure SSM Agent is installed and running
+snap install amazon-ssm-agent --classic
+systemctl enable snap.amazon-ssm-agent.amazon-ssm-agent.service
+systemctl start snap.amazon-ssm-agent.amazon-ssm-agent.service
 
 # Configure AWS CLI region (will be set by user)
-mkdir -p /home/ec2-user/.aws
+mkdir -p /home/ubuntu/.aws
 
 # Create a welcome message
 cat > /etc/motd << EOF
@@ -44,8 +46,8 @@ Remember to:
 EOF
 
 # Set proper permissions
-chown ec2-user:ec2-user /home/ec2-user/.aws
-chmod 700 /home/ec2-user/.aws
+chown ubuntu:ubuntu /home/ubuntu/.aws
+chmod 700 /home/ubuntu/.aws
 
 # Log the completion
 echo "$(date): Bastion host setup completed" >> /var/log/bastion-setup.log

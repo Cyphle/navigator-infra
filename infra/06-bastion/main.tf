@@ -1,11 +1,11 @@
-# Data source to get the latest Amazon Linux 2 AMI
-data "aws_ami" "amazon_linux" {
+# Data source to get the latest Ubuntu AMI
+data "aws_ami" "ubuntu" {
   most_recent = true
-  owners      = ["amazon"]
+  owners      = ["099720109477"] # Canonical
 
   filter {
     name   = "name"
-    values = ["amzn2-ami-hvm-*-x86_64-gp2"]
+    values = ["ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-amd64-server-*"]
   }
 
   filter {
@@ -109,7 +109,7 @@ resource "aws_iam_role_policy_attachment" "bastion_ssm" {
 
 # Bastion host EC2 instance
 resource "aws_instance" "bastion" {
-  ami                    = data.aws_ami.amazon_linux.id
+  ami                    = data.aws_ami.ubuntu.id
   instance_type          = var.instance_type
   key_name               = var.key_name
   vpc_security_group_ids = [aws_security_group.bastion.id]
