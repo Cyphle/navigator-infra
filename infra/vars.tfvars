@@ -23,3 +23,6 @@ database_config = {
 
 # ECS
 github_claim_suffixes = ["environment:prod"]
+
+# EC2
+key_name = "cyphle-mac"
