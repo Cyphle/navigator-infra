@@ -51,7 +51,7 @@ resource "aws_secretsmanager_secret_version" "db_credentials" {
 
 # RDS Parameter Group
 resource "aws_db_parameter_group" "main" {
-  family = "postgres16"
+  family = "postgres17"
   name   = "${var.project_name}-db-params"
 
   parameter {
