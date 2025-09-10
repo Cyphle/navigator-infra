@@ -3,6 +3,11 @@
 # Update system packages
 yum update -y
 
+# Ensure SSM Agent is installed and running (usually pre-installed on Amazon Linux 2)
+yum install -y amazon-ssm-agent
+systemctl enable amazon-ssm-agent
+systemctl start amazon-ssm-agent
+
 # Install useful tools for bastion host
 yum install -y \
     htop \

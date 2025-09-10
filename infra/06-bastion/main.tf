@@ -101,6 +101,12 @@ resource "aws_iam_instance_profile" "bastion" {
   }
 }
 
+# Attach SSM policy for Session Manager
+resource "aws_iam_role_policy_attachment" "bastion_ssm" {
+  role       = aws_iam_role.bastion.name
+  policy_arn = "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+}
+
 # Bastion host EC2 instance
 resource "aws_instance" "bastion" {
   ami                    = data.aws_ami.amazon_linux.id
