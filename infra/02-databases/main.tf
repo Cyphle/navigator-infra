@@ -18,11 +18,15 @@ resource "random_password" "keycloak_password" {
 
 # Store database credentials in Secrets Manager
 resource "aws_secretsmanager_secret" "db_credentials" {
-  name                    = "${var.project_name}-db-credentials"
-  description             = "Database credentials for Navigator application"
+  name                    = "${var.project_name}-db-secrets"
+  description             = "Database secrets for Navigator application"
   recovery_window_in_days = 7
 
   tags = local.common_tags
+
+  lifecycle {
+    prevent_destroy = true
+  }
 }
 
 resource "aws_secretsmanager_secret_version" "db_credentials_initial" {
@@ -35,12 +39,12 @@ resource "aws_secretsmanager_secret_version" "db_credentials_initial" {
     port           = 5432
 
     # Navigator database credentials
-    navigator_username = postgresql_role.navigator_user.name
+    navigator_username = "navigator_user"
     navigator_password = random_password.navigator_password.result
     navigator_dbname   = "navigator"
 
     # Keycloak database credentials
-    keycloak_username = postgresql_role.keycloak_user.name
+    keycloak_username = "keycloak_user"
     keycloak_password = random_password.keycloak_password.result
     keycloak_dbname   = "keycloak"
   })
