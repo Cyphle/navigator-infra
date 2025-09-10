@@ -73,7 +73,7 @@ resource "aws_db_instance" "main" {
 
   # Engine configuration
   engine         = "postgres"
-  engine_version = "16.1"
+  engine_version = "17.6"
   instance_class = var.database_config.instance_class
 
   # Storage configuration
@@ -228,8 +228,12 @@ resource "postgresql_grant" "navigator_grant" {
   database    = postgresql_database.navigator.name
   role        = postgresql_role.navigator_user.name
   privileges  = ["ALL"]
+  object_type = "database"
 
-  depends_on = [postgresql_role.navigator_user]
+  depends_on = [
+    postgresql_database.navigator,
+    postgresql_role.navigator_user
+  ]
 }
 
 # Grant permissions to Keycloak user on Keycloak database
@@ -237,6 +241,10 @@ resource "postgresql_grant" "keycloak_grant" {
   database    = postgresql_database.keycloak.name
   role        = postgresql_role.keycloak_user.name
   privileges  = ["ALL"]
+  object_type = "database"
 
-  depends_on = [postgresql_role.keycloak_user]
+  depends_on = [
+    postgresql_database.keycloak,
+    postgresql_role.keycloak_user
+  ]
 }
