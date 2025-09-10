@@ -25,27 +25,24 @@ resource "aws_secretsmanager_secret" "db_credentials" {
   tags = local.common_tags
 }
 
-resource "aws_secretsmanager_secret_version" "db_credentials" {
+resource "aws_secretsmanager_secret_version" "db_credentials_initial" {
   secret_id = aws_secretsmanager_secret.db_credentials.id
   secret_string = jsonencode({
     # Admin credentials (postgres user)
     admin_username = "postgres"
     admin_password = random_password.db_password.result
     engine         = "postgres"
-    host           = aws_db_instance.main.endpoint
     port           = 5432
-    
+
     # Navigator database credentials
     navigator_username = postgresql_role.navigator_user.name
     navigator_password = random_password.navigator_password.result
-    navigator_dbname   = postgresql_database.navigator.name
-    navigator_jdbc_url = "jdbc:postgresql://${aws_db_instance.main.endpoint}:5432/${postgresql_database.navigator.name}"
-    
+    navigator_dbname   = "navigator"
+
     # Keycloak database credentials
     keycloak_username = postgresql_role.keycloak_user.name
     keycloak_password = random_password.keycloak_password.result
-    keycloak_dbname   = postgresql_database.keycloak.name
-    keycloak_jdbc_url = "jdbc:postgresql://${aws_db_instance.main.endpoint}:5432/${postgresql_database.keycloak.name}"
+    keycloak_dbname   = "keycloak"
   })
 }
 
@@ -107,13 +104,17 @@ resource "aws_db_instance" "main" {
   parameter_group_name = aws_db_parameter_group.main.name
 
   # Deletion protection
-  deletion_protection = true
+  deletion_protection = false
   skip_final_snapshot = false
   final_snapshot_identifier = "${var.project_name}-db-final-snapshot-${formatdate("YYYY-MM-DD-hhmm", timestamp())}"
 
   tags = merge(local.common_tags, {
     Name = "${var.project_name}-db"
   })
+
+  depends_on = [
+    aws_secretsmanager_secret_version.db_credentials_initial
+  ]
 }
 
 resource "aws_security_group" "postgres_clients" {
@@ -229,11 +230,6 @@ resource "postgresql_grant" "navigator_grant" {
   role        = postgresql_role.navigator_user.name
   privileges  = ["ALL"]
   object_type = "database"
-
-  depends_on = [
-    postgresql_database.navigator,
-    postgresql_role.navigator_user
-  ]
 }
 
 # Grant permissions to Keycloak user on Keycloak database
@@ -242,9 +238,4 @@ resource "postgresql_grant" "keycloak_grant" {
   role        = postgresql_role.keycloak_user.name
   privileges  = ["ALL"]
   object_type = "database"
-
-  depends_on = [
-    postgresql_database.keycloak,
-    postgresql_role.keycloak_user
-  ]
 }
