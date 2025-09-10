@@ -1,3 +1,9 @@
+variable "region" {
+  description = "Default AWS region name"
+  type        = string
+  default     = "eu-west-3"
+}
+
 variable "project_name" {
   description = "Name of the project"
   type        = string
@@ -10,11 +16,6 @@ variable "environment" {
   default     = "prod"
 }
 
-variable "common_tags" {
-  description = "Common tags for all resources"
-  type        = map(string)
-}
-
 variable "database_config" {
   description = "Database configuration"
   type = object({
@@ -25,17 +26,4 @@ variable "database_config" {
     backup_window          = string
     maintenance_window     = string
   })
-}
-
-variable "database_subnet_group_name" {
-  description = "Name of the database subnet group"
-  type        = string
-}
-
-locals {
-  common_tags = {
-    Project     = var.project_name
-    Environment = var.environment
-    ManagedBy   = "terraform"
-  }
 }

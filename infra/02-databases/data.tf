@@ -4,3 +4,7 @@ data "aws_vpc" "main" {
     values = ["${var.project_name}-vpc"]
   }
 }
+
+data "aws_db_subnet_group" "database" {
+  name = "${var.project_name}-db-subnet-group"
+}

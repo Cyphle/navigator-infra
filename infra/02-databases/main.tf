@@ -22,7 +22,7 @@ resource "aws_secretsmanager_secret" "db_credentials" {
   description             = "Database credentials for Navigator application"
   recovery_window_in_days = 7
 
-  tags = var.common_tags
+  tags = local.common_tags
 }
 
 resource "aws_secretsmanager_secret_version" "db_credentials" {
@@ -64,7 +64,7 @@ resource "aws_db_parameter_group" "main" {
     value = "1000"
   }
 
-  tags = var.common_tags
+  tags = local.common_tags
 }
 
 # RDS Instance
@@ -88,7 +88,7 @@ resource "aws_db_instance" "main" {
   port     = 5432
 
   # Network configuration
-  db_subnet_group_name   = var.database_subnet_group_name
+  db_subnet_group_name   = data.aws_db_subnet_group.database.name
   vpc_security_group_ids = [aws_security_group.postgres_server.id]
   publicly_accessible    = false
 
@@ -102,6 +102,7 @@ resource "aws_db_instance" "main" {
   monitoring_interval = 60
   monitoring_role_arn = aws_iam_role.rds_enhanced_monitoring.arn
 
+
   # Parameter group
   parameter_group_name = aws_db_parameter_group.main.name
 
@@ -110,7 +111,7 @@ resource "aws_db_instance" "main" {
   skip_final_snapshot = false
   final_snapshot_identifier = "${var.project_name}-db-final-snapshot-${formatdate("YYYY-MM-DD-hhmm", timestamp())}"
 
-  tags = merge(var.common_tags, {
+  tags = merge(local.common_tags, {
     Name = "${var.project_name}-db"
   })
 }
@@ -168,7 +169,7 @@ resource "aws_iam_role" "rds_enhanced_monitoring" {
     ]
   })
 
-  tags = var.common_tags
+  tags = local.common_tags
 }
 
 resource "aws_iam_role_policy_attachment" "rds_enhanced_monitoring" {
