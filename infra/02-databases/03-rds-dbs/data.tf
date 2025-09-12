@@ -17,6 +17,10 @@ data "aws_secretsmanager_secret_version" "db_credentials" {
   secret_id = data.aws_secretsmanager_secret.db_credentials.id
 }
 
+data "aws_db_instance" "main" {
+  db_instance_identifier = "${var.project_name}-db"
+}
+
 locals {
   db_creds = jsondecode(data.aws_secretsmanager_secret_version.db_credentials.secret_string)
   # db_creds.admin_username

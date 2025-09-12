@@ -15,16 +15,6 @@ output "db_instance_arn" {
   value       = aws_db_instance.main.arn
 }
 
-output "navigator_database_name" {
-  description = "Name of the Navigator database"
-  value       = postgresql_database.navigator.name
-}
-
-output "keycloak_database_name" {
-  description = "Name of the Keycloak database"
-  value       = postgresql_database.keycloak.name
-}
-
 output "postgres_server_security_group_id" {
   description = "ID of the PostgreSQL server security group"
   value       = aws_security_group.postgres_server.id
