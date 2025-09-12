@@ -7,6 +7,6 @@ provider "postgresql" {
   port     = 5432
   database = "postgres"
   username = "postgres"
-  password = random_password.db_password.result
+  password = local.db_creds.admin_password
   sslmode  = "require"
 }

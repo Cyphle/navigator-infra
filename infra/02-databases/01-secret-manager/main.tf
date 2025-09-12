@@ -18,7 +18,7 @@ resource "random_password" "keycloak_password" {
 
 # Store database credentials in Secrets Manager
 resource "aws_secretsmanager_secret" "db_credentials" {
-  name                    = "${var.project_name}-db-secrets"
+  name                    = "${var.project_name}-db"
   description             = "Database secrets for Navigator application"
   recovery_window_in_days = 7
 
