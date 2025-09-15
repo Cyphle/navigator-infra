@@ -59,3 +59,14 @@ output "s3_endpoint_id" {
   description = "ID of the S3 Gateway VPC endpoint"
   value       = aws_vpc_endpoint.s3.id
 }
+
+# NAT Gateway outputs
+output "nat_gateway_ids" {
+  description = "IDs of the NAT Gateways"
+  value       = aws_nat_gateway.main[*].id
+}
+
+output "nat_gateway_public_ips" {
+  description = "Public IPs of the NAT Gateways"
+  value       = aws_eip.nat[*].public_ip
+}

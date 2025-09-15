@@ -20,6 +20,32 @@ resource "aws_internet_gateway" "main" {
   })
 }
 
+# Elastic IPs for NAT Gateways
+resource "aws_eip" "nat" {
+  count = 2
+
+  domain = "vpc"
+  depends_on = [aws_internet_gateway.main]
+
+  tags = merge(local.common_tags, {
+    Name = "${var.project_name}-nat-eip-${count.index + 1}"
+  })
+}
+
+# NAT Gateways (one per availability zone)
+resource "aws_nat_gateway" "main" {
+  count = 2
+
+  allocation_id = aws_eip.nat[count.index].id
+  subnet_id     = aws_subnet.public[count.index].id
+
+  tags = merge(local.common_tags, {
+    Name = "${var.project_name}-nat-gateway-${count.index + 1}"
+  })
+
+  depends_on = [aws_internet_gateway.main]
+}
+
 # Public Subnets (for ALB)
 resource "aws_subnet" "public" {
   count = 2
@@ -82,7 +108,10 @@ resource "aws_route_table" "private" {
 
   vpc_id = aws_vpc.main.id
 
-  # No internet route - access AWS services via VPC endpoints
+  route {
+    cidr_block     = "0.0.0.0/0"
+    nat_gateway_id = aws_nat_gateway.main[count.index].id
+  }
 
   tags = merge(local.common_tags, {
     Name = "${var.project_name}-private-rt-${count.index + 1}"
